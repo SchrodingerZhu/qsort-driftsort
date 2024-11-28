@@ -19,8 +19,13 @@ add_executable(
 )
 
 target_link_libraries(driftsort-fuzzer PRIVATE gtest)
-target_compile_options(driftsort-fuzzer PRIVATE -fsanitize=address -DADDRESS_SANITIZER)
-target_link_options(driftsort-fuzzer PRIVATE -fsanitize=address)
+
+if (NOT APPLE)
+  target_compile_options(driftsort-fuzzer PRIVATE -fsanitize=address -DADDRESS_SANITIZER)
+  target_link_options(driftsort-fuzzer PRIVATE -fsanitize=address)
+else()
+  message(WARNING "Skip AddressSanitizer on Apple")
+endif()
 
 link_fuzztest(driftsort-fuzzer)
 
