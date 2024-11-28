@@ -11,5 +11,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 if(DRIFTSORT_BUILD_FUZZERS)
-  add_subdirectory(fuzzers)
+  if (MSVC)
+    message(WARNING "Fuzzers are not supported on MSVC")
+  elseif (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    message(WARNING "Fuzzers are only supported on Clang")
+  else()
+    add_subdirectory(fuzzers)
+  endif()
 endif()
