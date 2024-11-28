@@ -25,32 +25,25 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         build_type: [Release, Debug]
-        c_compiler: [gcc, clang, cl, clang-cl]
-        include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
+        compiler: [
+          { c_compiler: cl, cpp_compiler: cl },
+          { c_compiler: gcc, cpp_compiler: g++ },
+          { c_compiler: clang, cpp_compiler: clang++ }
+          { c_compiler: clang-cl, cpp_compiler: clang-cl }
+        ]
         exclude:
           - os: windows-latest
-            c_compiler: gcc
+            compiler: { c_compiler: clang, cpp_compiler: clang++ }
           - os: windows-latest
-            c_compiler: clang
+            compiler: { c_compiler: gcc, cpp_compiler: g++ }
           - os: ubuntu-latest
-            c_compiler: cl
+            compiler: { c_compiler: cl, cpp_compiler: cl }
           - os: ubuntu-latest
-            c_compiler: clang-cl
+            compiler: { c_compiler: clang-cl, cpp_compiler: clang-cl }
           - os: macos-latest
-            c_compiler: cl
+            compiler: { c_compiler: cl, cpp_compiler: cl }
           - os: macos-latest
-            c_compiler: clang-cl
-          - os: macos-latest
-            c_compiler: gcc
+            compiler: { c_compiler: clang-cl, cpp_compiler: clang-cl }
 
     steps:
     - uses: actions/checkout@v4
@@ -67,8 +60,8 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.compiler.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
 
