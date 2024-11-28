@@ -28,7 +28,7 @@ jobs:
         compiler: [
           { c_compiler: cl, cpp_compiler: cl },
           { c_compiler: gcc, cpp_compiler: g++ },
-          { c_compiler: clang, cpp_compiler: clang++ }
+          { c_compiler: clang, cpp_compiler: clang++ },
           { c_compiler: clang-cl, cpp_compiler: clang-cl }
         ]
         exclude:
