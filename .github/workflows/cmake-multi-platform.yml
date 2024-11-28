@@ -10,8 +10,9 @@ on:
 
 jobs:
   build:
+    env:
+      SCCACHE_GHA_ENABLED: "true"
     runs-on: ${{ matrix.os }}
-
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
@@ -48,6 +49,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Run sccache-cache
+      uses: mozilla-actions/sccache-action@v0.0.6
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
@@ -63,6 +67,8 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.compiler.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_C_COMPILER_LAUNCHER=sccache
+        -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
         -S ${{ github.workspace }}
 
     - name: Build
