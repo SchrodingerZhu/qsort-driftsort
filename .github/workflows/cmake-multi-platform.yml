@@ -45,6 +45,8 @@ jobs:
             compiler: { c_compiler: cl, cpp_compiler: cl }
           - os: macos-latest
             compiler: { c_compiler: clang-cl, cpp_compiler: clang-cl }
+          - os: macos-latest
+            compiler: { c_compiler: gcc, cpp_compiler: g++ }
 
     steps:
     - uses: actions/checkout@v4
