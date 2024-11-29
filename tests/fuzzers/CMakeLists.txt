@@ -1,5 +1,5 @@
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR APPLE)
-  message(STATUS "Skipping fuzzers on non-apple clang")
+  message(STATUS "Skipping fuzzers on non-clang or apple")
   return()
 endif()
 
