@@ -1,9 +1,11 @@
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR APPLE)
-  message(STATUS "Skipping fuzzers on non-clang or apple")
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  message(STATUS "Skipping fuzzers on non-clang")
   return()
 endif()
 
-set(FUZZTEST_FUZZING_MODE "ON" CACHE STRING "Fuzzing mode" FORCE)
+if (NOT APPLE)
+  set(FUZZTEST_FUZZING_MODE "ON" CACHE STRING "Fuzzing mode" FORCE)
+endif()
 
 FetchContent_Declare(
   fuzztest
