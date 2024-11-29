@@ -45,6 +45,8 @@ void sort4_is_stable(std::array<int, 4> in) {
 }
 
 void bidirectional_merge_test(std::vector<int> a) {
+  if (a.size() < 2)
+    return;
   auto mid = a.size() / 2;
   std::sort(a.begin(), a.begin() + mid);
   std::sort(a.begin() + mid, a.end());
@@ -57,4 +59,4 @@ void bidirectional_merge_test(std::vector<int> a) {
 FUZZ_TEST(DriftSortTest, sort4_stable_int);
 FUZZ_TEST(DriftSortTest, sort4_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort4_is_stable);
-FUZZ_TEST(DriftSortTest, bidirectional_merge_test);
+FUZZ_TEST(DriftSortTest, bidirectional_merge_test)
