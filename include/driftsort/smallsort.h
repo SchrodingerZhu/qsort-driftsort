@@ -159,5 +159,19 @@ void insert_tail(BlobPtr begin, BlobPtr tail, Comp comp) {
   }
 }
 
+/// Sort `v` assuming `v[..offset]` is already sorted.
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+void insertion_sort_shift_left(BlobPtr begin, size_t total, size_t offset,
+                               Comp comp) {
+  DRIFTSORT_ASSUME(offset > 0 && offset < total);
+  BlobPtr end = begin.offset(total);
+  BlobPtr tail = begin.offset(offset);
+  while (tail != end) {
+    insert_tail(begin, tail, comp);
+    tail = tail.offset(1);
+  }
+}
+
 } // namespace small
 } // namespace driftsort

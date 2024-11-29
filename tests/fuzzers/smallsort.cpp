@@ -102,6 +102,17 @@ void insert_tail_test(std::vector<int> a) {
   ASSERT_EQ(a, b);
 }
 
+void insertion_sort_shift_left_test(std::vector<int> a, size_t offset) {
+  if (a.size() < 2)
+    return;
+  std::vector<int> b = a;
+  std::sort(a.begin(), a.end());
+  offset = offset % (a.size() - 1) + 1;
+  std::sort(b.begin(), b.begin() + offset);
+  insertion_sort_shift_left(b.data(), b.size(), offset, compare_blob<int>);
+  ASSERT_EQ(a, b);
+}
+
 FUZZ_TEST(DriftSortTest, sort4_stable_int);
 FUZZ_TEST(DriftSortTest, sort4_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort4_is_stable);
@@ -110,3 +121,4 @@ FUZZ_TEST(DriftSortTest, sort8_stable_int);
 FUZZ_TEST(DriftSortTest, sort8_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort8_is_stable);
 FUZZ_TEST(DriftSortTest, insert_tail_test);
+FUZZ_TEST(DriftSortTest, insertion_sort_shift_left_test);
