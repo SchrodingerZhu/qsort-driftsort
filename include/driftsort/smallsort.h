@@ -173,5 +173,45 @@ void insertion_sort_shift_left(BlobPtr begin, size_t total, size_t offset,
   }
 }
 
+// scratch pad is of (16 + length) in size
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+void small_sort_general(BlobPtr base, size_t length, BlobPtr scratch,
+                        Comp comp) {
+  if (length < 2)
+    return;
+
+  size_t half = length / 2;
+
+  size_t presorted_length;
+  if (base.size() <= 16 && length >= 16) {
+    // small element and large length
+    sort8_stable(base, scratch, scratch.offset(length), comp);
+    sort8_stable(base.offset(half), scratch.offset(half),
+                 scratch.offset(length + 8), comp);
+    presorted_length = 8;
+  } else if (length >= 8) {
+    sort4_stable(base, scratch, comp);
+    sort4_stable(base.offset(half), scratch.offset(half), comp);
+    presorted_length = 4;
+  } else {
+    base.copy_nonoverlapping(scratch);
+    base.offset(half).copy_nonoverlapping(scratch.offset(half));
+    presorted_length = 1;
+  }
+  // sort two halves
+  for (size_t offset : {size_t{0}, half}) {
+    BlobPtr src = base.offset(offset);
+    BlobPtr dst = scratch.offset(offset);
+    size_t desired_length = offset == 0 ? half : length - half;
+    for (size_t i = presorted_length; i < desired_length; i++) {
+      src.offset(i).copy_nonoverlapping(dst.offset(i));
+      insert_tail(dst, dst.offset(i), comp);
+    }
+  }
+  // merge two halves
+  bidirectional_merge(scratch, length, base, comp);
+}
+
 } // namespace small
 } // namespace driftsort

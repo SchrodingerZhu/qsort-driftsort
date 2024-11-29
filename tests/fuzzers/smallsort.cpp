@@ -113,6 +113,24 @@ void insertion_sort_shift_left_test(std::vector<int> a, size_t offset) {
   ASSERT_EQ(a, b);
 }
 
+void small_sort_general_test(std::vector<int> a) {
+  std::vector<int> b = a;
+  std::vector<int> scratch_pad(a.size() + 16);
+  std::sort(a.begin(), a.end());
+  small_sort_general(b.data(), b.size(), scratch_pad.data(), compare_blob<int>);
+  ASSERT_EQ(a, b);
+}
+
+void small_sort_general_large_data_test(
+    std::vector<std::array<long long, 8>> a) {
+  std::vector b = a;
+  std::vector scratch_pad(a.size() + 16, std::array<long long, 8>{});
+  std::sort(a.begin(), a.end());
+  small_sort_general(b.data(), b.size(), scratch_pad.data(),
+                     compare_blob<std::array<long long, 8>>);
+  ASSERT_EQ(a, b);
+}
+
 FUZZ_TEST(DriftSortTest, sort4_stable_int);
 FUZZ_TEST(DriftSortTest, sort4_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort4_is_stable);
@@ -122,3 +140,5 @@ FUZZ_TEST(DriftSortTest, sort8_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort8_is_stable);
 FUZZ_TEST(DriftSortTest, insert_tail_test);
 FUZZ_TEST(DriftSortTest, insertion_sort_shift_left_test);
+FUZZ_TEST(DriftSortTest, small_sort_general_test);
+FUZZ_TEST(DriftSortTest, small_sort_general_large_data_test);
