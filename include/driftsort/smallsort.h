@@ -9,6 +9,7 @@
 #include "driftsort/blob.h"
 #include "driftsort/common.h"
 #include <concepts>
+#include <initializer_list>
 #include <tuple>
 
 namespace driftsort {
