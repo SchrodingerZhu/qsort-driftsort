@@ -39,5 +39,8 @@ public:
   DRIFTSORT_CONST constexpr bool operator==(BlobPtr other) const {
     return data == other.data;
   }
+  ptrdiff_t operator-(BlobPtr other) const {
+    return (data - other.data) / static_cast<ptrdiff_t>(element_size);
+  }
 };
 } // namespace driftsort

@@ -36,3 +36,16 @@
 #else
 #define DRIFTSORT_ALLOCA(n) (BlobPtr{n, static_cast<std::byte *>(_malloca(n))})
 #endif
+
+namespace driftsort {
+template <typename T> T saturating_sub(T a, T b) {
+#if __has_builtin(__builtin_sub_overflow)
+  T res;
+  if (__builtin_sub_overflow(a, b, &res))
+    return 0;
+  return res;
+#else
+  return a < b ? 0 : a - b;
+#endif
+}
+} // namespace driftsort

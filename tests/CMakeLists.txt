@@ -15,3 +15,5 @@ if(DRIFTSORT_BUILD_FUZZERS)
     add_subdirectory(fuzzers)
   endif()
 endif()
+
+add_subdirectory(unittests)
