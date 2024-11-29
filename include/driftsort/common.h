@@ -21,12 +21,12 @@
 #endif
 
 #ifdef __GNUC__
-#define DIRFTSORT_LIKELY(x) __builtin_expect(!!(x), 1)
-#define DIRFTSORT_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define DRIFTSORT_LIKELY(x) __builtin_expect(!!(x), 1)
+#define DRIFTSORT_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define DRIFTSORT_CONST [[gnu::const]]
 #else
-#define DIRFTSORT_LIKELY(x) (x)
-#define DIRFTSORT_UNLIKELY(x) (x)
+#define DRIFTSORT_LIKELY(x) (x)
+#define DRIFTSORT_UNLIKELY(x) (x)
 #define DRIFTSORT_CONST
 #endif
 
