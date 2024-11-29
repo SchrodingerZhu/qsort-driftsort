@@ -92,6 +92,16 @@ void sort8_is_stable(std::array<int, 8> in) {
   }
 }
 
+void insert_tail_test(std::vector<int> a) {
+  if (a.size() < 2)
+    return;
+  std::vector<int> b = a;
+  std::sort(a.begin(), a.end());
+  std::sort(b.begin(), b.end() - 1);
+  insert_tail(b.data(), b.data() + b.size() - 1, compare_blob<int>);
+  ASSERT_EQ(a, b);
+}
+
 FUZZ_TEST(DriftSortTest, sort4_stable_int);
 FUZZ_TEST(DriftSortTest, sort4_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort4_is_stable);
@@ -99,3 +109,4 @@ FUZZ_TEST(DriftSortTest, bidirectional_merge_test);
 FUZZ_TEST(DriftSortTest, sort8_stable_int);
 FUZZ_TEST(DriftSortTest, sort8_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort8_is_stable);
+FUZZ_TEST(DriftSortTest, insert_tail_test);

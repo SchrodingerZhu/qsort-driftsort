@@ -26,10 +26,11 @@ public:
   constexpr BlobPtr() : element_size(0), data(nullptr) {}
   constexpr BlobPtr(size_t element_size, std::byte *data)
       : element_size(element_size), data(data) {}
-  void copy_nonoverlapping(BlobPtr dest) const {
-    std::memcpy(dest, data, element_size);
+  void copy_nonoverlapping(BlobPtr dest, size_t n = 1) const {
+    std::memcpy(dest, data, element_size * n);
   }
   void *get() const { return data; }
+  size_t size() const { return element_size; }
   constexpr operator void *() const { return data; }
   constexpr BlobPtr offset(ptrdiff_t offset) const {
     return {element_size, data + offset * static_cast<ptrdiff_t>(element_size)};

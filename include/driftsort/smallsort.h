@@ -121,5 +121,43 @@ void sort8_stable(BlobPtr base, BlobPtr dest, BlobPtr scratch, Comp &&comp) {
   bidirectional_merge(scratch, 8, dest, comp);
 }
 
+class CopyOnDrop {
+  BlobPtr src;
+  BlobPtr dest;
+  size_t length;
+
+public:
+  constexpr CopyOnDrop(BlobPtr src, BlobPtr dest, size_t length)
+      : src(src), dest(dest), length(length) {}
+  ~CopyOnDrop() { src.copy_nonoverlapping(dest, length); }
+  void set_new_dst(BlobPtr new_dest) { dest = new_dest; }
+  BlobPtr get_dst() const { return dest; }
+};
+
+/// Sorts range [begin, tail] assuming [begin, tail) is already sorted.
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+void insert_tail(BlobPtr begin, BlobPtr tail, Comp comp) {
+  BlobPtr cursor = tail.offset(-1);
+
+  // fast return if tail is already sorted
+  if (!comp(tail, cursor))
+    return;
+
+  BlobPtr tmp = DRIFTSORT_ALLOCA(tail.size());
+  tail.copy_nonoverlapping(tmp);
+  CopyOnDrop gap_guard(tmp, tail, 1);
+
+  for (;;) {
+    cursor.copy_nonoverlapping(gap_guard.get_dst());
+    gap_guard.set_new_dst(cursor);
+    if (cursor == begin)
+      break;
+    cursor = cursor.offset(-1);
+    if (!comp(tmp, cursor))
+      break;
+  }
+}
+
 } // namespace small
 } // namespace driftsort
