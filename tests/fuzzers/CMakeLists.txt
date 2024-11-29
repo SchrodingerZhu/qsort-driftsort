@@ -1,4 +1,7 @@
-set(FUZZTEST_FUZZING_MODE "ON" CACHE STRING "Fuzzing mode" FORCE)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE)
+  message(STATUS "enable fuzzing mode for non-apple clang")
+  set(FUZZTEST_FUZZING_MODE "ON" CACHE STRING "Fuzzing mode" FORCE)
+endif()
 
 FetchContent_Declare(
   fuzztest
@@ -19,8 +22,12 @@ add_executable(
 )
 
 target_link_libraries(driftsort-fuzzer PRIVATE gtest driftsort)
-target_compile_options(driftsort-fuzzer PRIVATE -fsanitize=address -DADDRESS_SANITIZER)
-target_link_options(driftsort-fuzzer PRIVATE -fsanitize=address)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE)
+message(STATUS "enable address sanitizer for fuzzers on non-apple clang")
+  target_compile_options(driftsort-fuzzer PRIVATE -fsanitize=address -DADDRESS_SANITIZER)
+  target_link_options(driftsort-fuzzer PRIVATE -fsanitize=address)
+endif()
 
 
 link_fuzztest(driftsort-fuzzer)

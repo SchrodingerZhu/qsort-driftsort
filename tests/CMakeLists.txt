@@ -9,10 +9,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 if(DRIFTSORT_BUILD_FUZZERS)
-  if (MSVC OR APPLE)
-    message(STATUS "Skipping fuzzers on MSVC or Apple")
-  elseif (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    message(STATUS "Skipping fuzzers on non-clang compiler")
+  if (MSVC)
+    message(STATUS "Skipping fuzzers on MSVC")
   else()
     add_subdirectory(fuzzers)
   endif()
