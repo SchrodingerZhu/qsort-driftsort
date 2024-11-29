@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "driftsort/common.h"
 #include <cstddef>
 #include <cstring>
 #include <type_traits>
@@ -32,6 +33,10 @@ public:
   constexpr operator void *() const { return data; }
   constexpr BlobPtr offset(ptrdiff_t offset) const {
     return {element_size, data + offset * static_cast<ptrdiff_t>(element_size)};
+  }
+  constexpr bool operator<(BlobPtr other) const { return data < other.data; }
+  DRIFTSORT_CONST constexpr bool operator==(BlobPtr other) const {
+    return data == other.data;
   }
 };
 } // namespace driftsort
