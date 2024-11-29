@@ -1,5 +1,5 @@
-# driftsort-cpp
-C++ Implementation of Driftsort (for upstreaming into llvm-libc).
+# qsort-driftsort
+`qsort` implementation backed by `driftsort` (for upstreaming into llvm-libc).
 
 ## License
 
