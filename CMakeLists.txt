@@ -11,5 +11,6 @@ add_library(driftsort INTERFACE)
 target_include_directories(driftsort INTERFACE include)
 
 if (DRIFTSORT_BUILD_TESTS)
+  enable_testing()
   add_subdirectory(tests)
 endif()
