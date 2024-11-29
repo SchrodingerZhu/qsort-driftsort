@@ -6,18 +6,26 @@
 
 #pragma once
 
+#include <cassert>
+
 #if __has_builtin(__assume)
-#define DRIFTSORT_ASSUME(x) __assume(x)
+#define DRIFTSORT_ASSUME_(x) __assume(x)
 #elif __has_builtin(__builtin_assume)
-#define DRIFTSORT_ASSUME(x) __builtin_assume(x)
+#define DRIFTSORT_ASSUME_(x) __builtin_assume(x)
 #elif __has_builtin(__builtin_unreachable)
-#define DRIFTSORT_ASSUME(x)                                                    \
+#define DRIFTSORT_ASSUME_(x)                                                   \
   do {                                                                         \
     if (!(x))                                                                  \
       __builtin_unreachable();                                                 \
   } while (0)
 #else
-#define DRIFTSORT_ASSUME(x) (void)(x)
+#define DRIFTSORT_ASSUME_(x) (void)(x)
+#endif
+
+#ifdef NDEBUG
+#define DRIFTSORT_ASSUME(x) DRIFTSORT_ASSUME_(x)
+#else
+#define DRIFTSORT_ASSUME(x) assert(x)
 #endif
 
 #ifdef __GNUC__
