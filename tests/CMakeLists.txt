@@ -1,7 +1,5 @@
 include(FetchContent)
 
-add_library(driftsort_test INTERFACE)
-
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git

@@ -18,10 +18,10 @@ add_executable(
   ${FUZZER_SOURCES}
 )
 
-target_link_libraries(driftsort-fuzzer PRIVATE gtest)
+target_link_libraries(driftsort-fuzzer PRIVATE gtest driftsort)
 target_compile_options(driftsort-fuzzer PRIVATE -fsanitize=address -DADDRESS_SANITIZER)
 target_link_options(driftsort-fuzzer PRIVATE -fsanitize=address)
 
-link_fuzztest(driftsort-fuzzer)
 
+link_fuzztest(driftsort-fuzzer)
 gtest_discover_tests(driftsort-fuzzer)

@@ -3,3 +3,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+namespace driftsort {
+template <class T> class ElementWithSrc {
+  T val;
+  T *addr;
+
+public:
+  T &operator*() { return val; }
+  T *operator->() { return &val; }
+  bool operator<(const ElementWithSrc &other) const { return val < other.val; }
+  bool operator==(const ElementWithSrc &other) const {
+    return val == other.val;
+  }
+  bool address_less_eq(const ElementWithSrc &other) const {
+    return addr <= other.addr;
+  }
+  void record_address() { addr = &val; }
+  ElementWithSrc(T &val) : val(val), addr(nullptr) {}
+  ElementWithSrc() : val(), addr(nullptr) {}
+};
+} // namespace driftsort
