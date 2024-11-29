@@ -20,7 +20,7 @@
 #define DRIFTSORT_ASSUME(x) (void)(x)
 #endif
 
-#if __GNUC__
+#ifdef __GNUC__
 #define DIRFTSORT_LIKELY(x) __builtin_expect(!!(x), 1)
 #define DIRFTSORT_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define DRIFTSORT_CONST [[gnu::const]]
@@ -28,4 +28,11 @@
 #define DIRFTSORT_LIKELY(x) (x)
 #define DIRFTSORT_UNLIKELY(x) (x)
 #define DRIFTSORT_CONST
+#endif
+
+#ifdef __GNUC__
+#define DRIFTSORT_ALLOCA(n)                                                    \
+  (BlobPtr{n, static_cast<std::byte *>(__builtin_alloca(n))})
+#else
+#define DRIFTSORT_ALLOCA(n) (BlobPtr{n, static_cast<std::byte *>(_malloca(n))})
 #endif
