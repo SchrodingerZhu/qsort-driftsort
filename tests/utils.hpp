@@ -3,6 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+#include "driftsort/blob.h"
+#include <concepts>
+#include <functional>
 namespace driftsort {
 template <class T> class ElementWithSrc {
   T val;
@@ -20,6 +23,13 @@ public:
   }
   void record_address() { addr = &val; }
   ElementWithSrc(T &val) : val(val), addr(nullptr) {}
-  ElementWithSrc() : val(), addr(nullptr) {}
+  ElementWithSrc() = default;
 };
+
+template <typename T, std::predicate<const T &, const T &> Comp = std::less<>>
+bool compare_blob(BlobPtr a, BlobPtr b) {
+  return Comp{}(*static_cast<const T *>(a.get()),
+                *static_cast<const T *>(b.get()));
+}
+
 } // namespace driftsort
