@@ -7,7 +7,9 @@
 #pragma once
 
 #include "driftsort/blob.h"
+#include "driftsort/common.h"
 #include <concepts>
+#include <tuple>
 
 namespace driftsort {
 namespace small {
@@ -46,5 +48,70 @@ inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp &&comp) {
   hi.copy_nonoverlapping(dest.offset(2));
   max.copy_nonoverlapping(dest.offset(3));
 }
+
+using MergeResult = std::tuple<BlobPtr, BlobPtr, BlobPtr>;
+
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+inline MergeResult merge_up(BlobPtr left, BlobPtr right, BlobPtr dest,
+                            Comp &&comp) {
+  bool advance_left = !comp(right, left);
+  BlobPtr src = advance_left ? left : right;
+  src.copy_nonoverlapping(dest);
+  right = right.offset(!advance_left);
+  left = left.offset(advance_left);
+  dest = dest.offset(1);
+  return {left, right, dest};
+}
+
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+inline MergeResult merge_down(BlobPtr left, BlobPtr right, BlobPtr dest,
+                              Comp &&comp) {
+  bool retreat_right = !comp(right, left);
+  BlobPtr src = retreat_right ? right : left;
+  src.copy_nonoverlapping(dest);
+  right = right.offset(-retreat_right);
+  left = left.offset(-!retreat_right);
+  dest = dest.offset(-1);
+  return {left, right, dest};
+}
+
+/// Merge v assuming v[..len / 2] and v[len / 2..] are sorted.
+///
+/// Original idea for bi-directional merging by Igor van den Hoven (quadsort),
+/// adapted to only use merge up and down. In contrast to the original
+/// parity_merge function, it performs 2 writes instead of 4 per iteration.
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp &&comp) {
+  size_t half = len / 2;
+  DRIFTSORT_ASSUME(half > 0);
+  BlobPtr left = src;
+  BlobPtr right = src.offset(half);
+  BlobPtr left_rev = src.offset(half - 1);
+  BlobPtr right_rev = src.offset(len - 1);
+  BlobPtr dst_rev = dst.offset(len - 1);
+  for (size_t i = 0; i < half; i++) {
+    std::tie(left, right, dst) = merge_up(left, right, dst, comp);
+    std::tie(left_rev, right_rev, dst_rev) =
+        merge_down(left_rev, right_rev, dst_rev, comp);
+  }
+
+  BlobPtr left_end = left_rev.offset(1);
+  BlobPtr right_end = right_rev.offset(1);
+
+  if (len % 2 != 0) {
+    bool left_nonempty = left < left_end;
+    BlobPtr last_src = left_nonempty ? left : right;
+    last_src.copy_nonoverlapping(dst);
+    left = left.offset(left_nonempty);
+    right = right.offset(!left_nonempty);
+  }
+
+  DRIFTSORT_ASSUME(left == left_end);
+  DRIFTSORT_ASSUME(right == right_end);
+}
+
 } // namespace small
 } // namespace driftsort
