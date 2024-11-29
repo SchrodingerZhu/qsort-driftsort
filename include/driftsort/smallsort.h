@@ -113,5 +113,13 @@ void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp &&comp) {
   DRIFTSORT_ASSUME(right == right_end);
 }
 
+template <typename Comp>
+  requires std::predicate<Comp, BlobPtr, BlobPtr>
+void sort8_stable(BlobPtr base, BlobPtr dest, BlobPtr scratch, Comp &&comp) {
+  sort4_stable(base, scratch, comp);
+  sort4_stable(base.offset(4), scratch.offset(4), comp);
+  bidirectional_merge(scratch, 8, dest, comp);
+}
+
 } // namespace small
 } // namespace driftsort

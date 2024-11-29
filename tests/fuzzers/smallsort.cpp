@@ -56,7 +56,46 @@ void bidirectional_merge_test(std::vector<int> a) {
   ASSERT_EQ(a, dst);
 }
 
+void sort8_stable_int(std::array<int, 8> in) {
+  std::array<int, 8> dst;
+  std::array<int, 8> scratch;
+  sort8_stable(in.begin(), dst.begin(), scratch.begin(), compare_blob<int>);
+  ASSERT_TRUE(std::is_sorted(dst.begin(), dst.end()));
+}
+
+void sort8_stable_int_reverse(std::array<int, 8> in) {
+  std::array<int, 8> dst;
+  std::array<int, 8> scratch;
+  sort8_stable(in.begin(), dst.begin(), scratch.begin(),
+               compare_blob<int, std::greater<>>);
+  ASSERT_TRUE(std::is_sorted(dst.begin(), dst.end(), std::greater<>()));
+}
+
+void sort8_is_stable(std::array<int, 8> in) {
+  std::array<ElementWithSrc<int>, 8> src{
+      ElementWithSrc<int>(in[0]), ElementWithSrc<int>(in[1]),
+      ElementWithSrc<int>(in[2]), ElementWithSrc<int>(in[3]),
+      ElementWithSrc<int>(in[4]), ElementWithSrc<int>(in[5]),
+      ElementWithSrc<int>(in[6]), ElementWithSrc<int>(in[7])};
+  std::array<ElementWithSrc<int>, 8> dst;
+  std::array<ElementWithSrc<int>, 8> scratch;
+  for (auto &e : src)
+    e.record_address();
+  sort8_stable(src.begin(), dst.begin(), scratch.begin(), compare_blob<int>);
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      auto x = dst[i];
+      auto y = dst[j];
+      if (x == y && x.address_less_eq(y))
+        ASSERT_TRUE(i <= j);
+    }
+  }
+}
+
 FUZZ_TEST(DriftSortTest, sort4_stable_int);
 FUZZ_TEST(DriftSortTest, sort4_stable_int_reverse);
 FUZZ_TEST(DriftSortTest, sort4_is_stable);
 FUZZ_TEST(DriftSortTest, bidirectional_merge_test);
+FUZZ_TEST(DriftSortTest, sort8_stable_int);
+FUZZ_TEST(DriftSortTest, sort8_stable_int_reverse);
+FUZZ_TEST(DriftSortTest, sort8_is_stable);
