@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD 20)
 option(DRIFTSORT_BUILD_TESTS "Build tests" ON)
 cmake_dependent_option(DRIFTSORT_BUILD_FUZZERS "Build fuzzers" ON "DRIFTSORT_BUILD_TESTS" OFF)
 
+if (MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 add_library(driftsort INTERFACE)
 target_include_directories(driftsort INTERFACE include)
 
