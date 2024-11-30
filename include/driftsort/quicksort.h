@@ -70,10 +70,14 @@ size_t stable_partition(BlobPtr v, size_t length, BlobPtr scratch,
   BlobPtr pivot_in_scratch;
   size_t loop_end_pos = pivot_pos;
   for (;;) {
+    constexpr size_t UNROLL = 4;
+    BlobPtr unroll_end = v.offset(saturating_sub(loop_end_pos, UNROLL - 1));
+    while (state.scan < unroll_end) {
+      for (size_t i = 0; i < UNROLL; i++)
+        state.partition_once(comp(state.scan, pivot));
+    }
+
     BlobPtr loop_end = v.offset(loop_end_pos);
-#ifdef __GNUC__
-#pragma unroll(4)
-#endif
     while (state.scan < loop_end)
       state.partition_once(comp(state.scan, pivot));
 
