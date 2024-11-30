@@ -57,9 +57,6 @@ public:
   constexpr BlobPtr lift(void *data) const {
     return {element_size, static_cast<std::byte *>(data)};
   }
-  bool operator()(BlobPtr a, BlobPtr b) const {
-    return compare(a.get(), b.get(), context);
-  }
   bool operator()(const void *a, const void *b) const {
     return compare(a, b, context);
   }
