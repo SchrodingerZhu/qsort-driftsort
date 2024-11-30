@@ -16,7 +16,7 @@ namespace driftsort {
 namespace small {
 template <typename Comp>
   requires std::predicate<Comp, BlobPtr, BlobPtr>
-inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp &&comp) {
+inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp comp) {
   bool c1 = comp(base.offset(1), base.offset(0));
   bool c2 = comp(base.offset(3), base.offset(2));
 
@@ -50,34 +50,6 @@ inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp &&comp) {
   max.copy_nonoverlapping(dest.offset(3));
 }
 
-using MergeResult = std::tuple<BlobPtr, BlobPtr, BlobPtr>;
-
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-inline MergeResult merge_up(BlobPtr left, BlobPtr right, BlobPtr dest,
-                            Comp &&comp) {
-  bool advance_left = !comp(right, left);
-  BlobPtr src = advance_left ? left : right;
-  src.copy_nonoverlapping(dest);
-  right = right.offset(!advance_left);
-  left = left.offset(advance_left);
-  dest = dest.offset(1);
-  return {left, right, dest};
-}
-
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-inline MergeResult merge_down(BlobPtr left, BlobPtr right, BlobPtr dest,
-                              Comp &&comp) {
-  bool retreat_right = !comp(right, left);
-  BlobPtr src = retreat_right ? right : left;
-  src.copy_nonoverlapping(dest);
-  right = right.offset(-retreat_right);
-  left = left.offset(-!retreat_right);
-  dest = dest.offset(-1);
-  return {left, right, dest};
-}
-
 /// Merge v assuming v[..len / 2] and v[len / 2..] are sorted.
 ///
 /// Original idea for bi-directional merging by Igor van den Hoven (quadsort),
@@ -85,33 +57,59 @@ inline MergeResult merge_down(BlobPtr left, BlobPtr right, BlobPtr dest,
 /// parity_merge function, it performs 2 writes instead of 4 per iteration.
 template <typename Comp>
   requires std::predicate<Comp, BlobPtr, BlobPtr>
-void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp &&comp) {
+void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp comp) {
+  struct MergeResult {
+    BlobPtr left;
+    BlobPtr right;
+    BlobPtr dest;
+
+    void merge_up(Comp comp) {
+      bool advance_left = !comp(right, left);
+      BlobPtr src = advance_left ? left : right;
+      src.copy_nonoverlapping(dest);
+      right = right.offset(!advance_left);
+      left = left.offset(advance_left);
+      dest = dest.offset(1);
+    }
+
+    void merge_down(Comp comp) {
+      bool retreat_right = !comp(right, left);
+      BlobPtr src = retreat_right ? right : left;
+      src.copy_nonoverlapping(dest);
+      right = right.offset(-retreat_right);
+      left = left.offset(-!retreat_right);
+      dest = dest.offset(-1);
+    }
+  };
+
   size_t half = len / 2;
   DRIFTSORT_ASSUME(half > 0);
-  BlobPtr left = src;
-  BlobPtr right = src.offset(half);
-  BlobPtr left_rev = src.offset(half - 1);
-  BlobPtr right_rev = src.offset(len - 1);
-  BlobPtr dst_rev = dst.offset(len - 1);
+  MergeResult forward{
+      src,
+      src.offset(half),
+      dst,
+  };
+  MergeResult backward{src.offset(half - 1), src.offset(len - 1),
+                       dst.offset(len - 1)};
+
   for (size_t i = 0; i < half; i++) {
-    std::tie(left, right, dst) = merge_up(left, right, dst, comp);
-    std::tie(left_rev, right_rev, dst_rev) =
-        merge_down(left_rev, right_rev, dst_rev, comp);
+    forward.merge_up(comp);
+    backward.merge_down(comp);
   }
 
-  BlobPtr left_end = left_rev.offset(1);
-  BlobPtr right_end = right_rev.offset(1);
+  BlobPtr left_end = backward.left.offset(1);
+  BlobPtr right_end = backward.right.offset(1);
 
   if (len % 2 != 0) {
-    bool left_nonempty = left < left_end;
-    BlobPtr last_src = left_nonempty ? left : right;
-    last_src.copy_nonoverlapping(dst);
-    left = left.offset(left_nonempty);
-    right = right.offset(!left_nonempty);
+    bool left_nonempty = forward.left < left_end;
+    BlobPtr last_src = left_nonempty ? forward.left : forward.right;
+    last_src.copy_nonoverlapping(forward.dest);
+    forward.left = forward.left.offset(left_nonempty);
+    forward.right = forward.right.offset(!left_nonempty);
   }
 
-  DRIFTSORT_ASSUME(left == left_end);
-  DRIFTSORT_ASSUME(right == right_end);
+  DRIFTSORT_ASSUME(forward.left == left_end);
+  DRIFTSORT_ASSUME(forward.right == right_end);
 }
 
 template <typename Comp>
