@@ -36,10 +36,38 @@ void quick_sort_greater(std::vector<int> a, size_t limit) {
   quick_sort<std::greater<int>>(a, limit);
 }
 
+void quick_sort_is_stable(std::vector<int> a, size_t limit) {
+  std::vector<ElementWithSrc<int>> src{};
+  for (size_t i = 0; i < a.size(); i++) {
+    src.push_back(ElementWithSrc<int>(a[i]));
+    src.back().record_address();
+  }
+  std::vector<ElementWithSrc<int>> scratch(src.size() + 16);
+  stable_quicksort(src.data(), src.size(), scratch.data(), limit, {},
+                   compare_blob<ElementWithSrc<int>>,
+                   [](BlobPtr v, size_t length, BlobPtr, auto) {
+                     ElementWithSrc<int> *base =
+                         static_cast<ElementWithSrc<int> *>(v.get());
+                     std::stable_sort(base, base + length);
+                   });
+  for (size_t i = 0; i < src.size(); i++) {
+    for (size_t j = 0; j < src.size(); j++) {
+      auto x = src[i];
+      auto y = src[j];
+      if (x == y && x.address_less_eq(y))
+        ASSERT_TRUE(i <= j);
+    }
+  }
+}
+
 FUZZ_TEST(DriftSortTest, quick_sort_less)
     .WithDomains(fuzztest::Arbitrary<std::vector<int>>(),
                  fuzztest::InRange(0, 64));
 
 FUZZ_TEST(DriftSortTest, quick_sort_greater)
+    .WithDomains(fuzztest::Arbitrary<std::vector<int>>(),
+                 fuzztest::InRange(0, 64));
+
+FUZZ_TEST(DriftSortTest, quick_sort_is_stable)
     .WithDomains(fuzztest::Arbitrary<std::vector<int>>(),
                  fuzztest::InRange(0, 64));
