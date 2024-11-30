@@ -111,7 +111,7 @@ inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
     return RunState::sorted(eager_sort_len);
   }
 
-  return RunState::unsorted(min_good_run_length);
+  return RunState::unsorted(std::min(length, min_good_run_length));
 }
 
 // Lazy logical runs as in Glidesort.
@@ -245,8 +245,7 @@ inline void sort(void *raw_v, size_t length, void *raw_scratch,
       size_t merge_length = left.length() + prev_run.length();
       size_t merge_start_index = scan_idx - merge_length;
       BlobPtr merge_start = v.offset(merge_start_index);
-      size_t merge_window = scan_idx - merge_start_index;
-      prev_run = logical_merge(merge_start, merge_window, scratch,
+      prev_run = logical_merge(merge_start, merge_length, scratch,
                                scratch_length, left, prev_run, comp);
       stack_length--;
     }
