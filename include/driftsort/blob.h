@@ -61,13 +61,6 @@ public:
   bool operator()(const void *a, const void *b) const {
     return compare(a, b, context) < 0;
   }
-  int raw_compare(const void *a, const void *b) const {
-    return compare(a, b, context);
-  }
-  auto transform(Comparator transform) const {
-    return BlobComparator{element_size, transform,
-                          const_cast<void *>(static_cast<const void *>(this))};
-  }
 };
 
 } // namespace driftsort DRIFTSORT_HIDDEN

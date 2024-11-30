@@ -27,10 +27,16 @@ namespace quick {
 /// v.len()`, or `pivot_pos >= v.len()`, the result and `v`'s state is sound but
 /// unspecified.
 
+template <bool InvertComparison>
 inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
                                size_t pivot_pos, bool pivot_goes_left,
                                const BlobComparator &comp) {
-
+  auto compare = [&comp](const void *a, const void *b) {
+    if constexpr (InvertComparison)
+      return !comp(b, a);
+    else
+      return comp(a, b);
+  };
   struct PartitionState {
     // The current element that is being looked at, scans left to right through
     // slice.
@@ -80,12 +86,12 @@ inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
     BlobPtr unroll_end = v.offset(saturating_sub(loop_end_pos, UNROLL - 1));
     while (state.scan < unroll_end) {
       for (size_t i = 0; i < UNROLL; i++)
-        state.partition_once(comp(state.scan, pivot));
+        state.partition_once(compare(state.scan, pivot));
     }
 
     BlobPtr loop_end = v.offset(loop_end_pos);
     while (state.scan < loop_end)
-      state.partition_once(comp(state.scan, pivot));
+      state.partition_once(compare(state.scan, pivot));
 
     if (loop_end_pos == length)
       break;
@@ -147,17 +153,13 @@ inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
 
     if (!perform_equal_partition) {
       left_partition_len =
-          stable_partition(v, length, scratch, pivot_pos, false, comp);
+          stable_partition<false>(v, length, scratch, pivot_pos, false, comp);
       perform_equal_partition = left_partition_len == 0;
     }
 
     if (perform_equal_partition) {
-      size_t mid_eq = stable_partition(
-          v, length, scratch, pivot_pos, true,
-          comp.transform([](const void *a, const void *b, void *context) {
-            BlobComparator &inner = *static_cast<BlobComparator *>(context);
-            return -static_cast<int>(!inner(b, a));
-          }));
+      size_t mid_eq =
+          stable_partition<true>(v, length, scratch, pivot_pos, true, comp);
       v = v.offset(mid_eq);
       length -= mid_eq;
       left_ancestor_pivot = nullptr;
