@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#include "driftsort/quicksort.h"
 #include "../utils.hpp"
+#include "driftsort/driftsort.h"
 #include "fuzztest/fuzztest.h"
 #include <algorithm>
 #include <fuzztest/fuzztest.h>
@@ -18,12 +18,8 @@ template <class F> void quick_sort(std::vector<int> a, size_t limit) {
   std::vector<int> b = a;
   std::sort(a.begin(), a.end(), F{});
   std::vector<int> scratch(a.size() + 16);
-  stable_quicksort(b.data(), b.size(), scratch.data(), limit, {},
-                   compare_blob<int, F>(),
-                   [](void *v, size_t length, void *, auto) {
-                     int *base = static_cast<int *>(v);
-                     std::sort(base, base + length, F{});
-                   });
+  stable_quicksort(b.data(), b.size(), scratch.data(), scratch.size(), limit,
+                   {}, compare_blob<int, F>());
   ASSERT_EQ(a, b);
 }
 
@@ -42,13 +38,8 @@ void quick_sort_is_stable(std::vector<int> a, size_t limit) {
   for (auto &e : src)
     e.record_address();
   std::vector<ElementWithSrc<int>> scratch(src.size() + 16);
-  stable_quicksort(src.data(), src.size(), scratch.data(), limit, {},
-                   compare_blob<ElementWithSrc<int>>(),
-                   [](void *v, size_t length, void *, auto) {
-                     ElementWithSrc<int> *base =
-                         static_cast<ElementWithSrc<int> *>(v);
-                     std::stable_sort(base, base + length);
-                   });
+  stable_quicksort(src.data(), src.size(), scratch.data(), scratch.size(),
+                   limit, {}, compare_blob<ElementWithSrc<int>>());
   for (size_t i = 0; i < src.size(); i++) {
     for (size_t j = 0; j < src.size(); j++) {
       auto x = src[i];

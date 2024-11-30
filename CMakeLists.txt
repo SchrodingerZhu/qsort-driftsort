@@ -10,7 +10,11 @@ cmake_dependent_option(DRIFTSORT_BUILD_FUZZERS "Build fuzzers" ON "DRIFTSORT_BUI
 add_library(driftsort INTERFACE)
 target_include_directories(driftsort INTERFACE include)
 
+add_subdirectory(src)
+
 if (DRIFTSORT_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
+
+

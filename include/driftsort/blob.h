@@ -11,7 +11,7 @@
 #include <cstring>
 #include <type_traits>
 
-namespace driftsort {
+namespace driftsort DRIFTSORT_HIDDEN {
 
 // A fat pointer with size
 class BlobPtr {
@@ -44,7 +44,7 @@ public:
   }
 };
 
-using Comparator = bool (*)(const void *, const void *, void *);
+using Comparator = int (*)(const void *, const void *, void *);
 
 class BlobComparator {
   size_t element_size;
@@ -59,6 +59,9 @@ public:
     return {element_size, static_cast<std::byte *>(data)};
   }
   bool operator()(const void *a, const void *b) const {
+    return compare(a, b, context) < 0;
+  }
+  int raw_compare(const void *a, const void *b) const {
     return compare(a, b, context);
   }
   auto transform(Comparator transform) const {
@@ -67,4 +70,4 @@ public:
   }
 };
 
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN

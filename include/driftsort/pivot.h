@@ -9,7 +9,7 @@
 #include "driftsort/blob.h"
 #include <cstddef>
 
-namespace driftsort {
+namespace driftsort DRIFTSORT_HIDDEN {
 namespace pivot {
 // Recursively select a pseudomedian if above this threshold.
 inline constexpr size_t PSEUDO_MEDIAN_REC_THRESHOLD = 64;
@@ -82,4 +82,4 @@ inline size_t choose_pivot(void *raw_v, size_t length,
 }
 
 } // namespace pivot
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN

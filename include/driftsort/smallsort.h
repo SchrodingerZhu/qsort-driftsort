@@ -10,7 +10,7 @@
 #include "driftsort/common.h"
 #include <initializer_list>
 
-namespace driftsort {
+namespace driftsort DRIFTSORT_HIDDEN {
 namespace small {
 
 inline void sort4_stable(void *raw_base, void *raw_dest,
@@ -150,7 +150,7 @@ inline void insert_tail(void *raw_begin, void *raw_tail,
   if (!comp(tail, cursor))
     return;
 
-  BlobPtr tmp = DRIFTSORT_ALLOCA(tail.size());
+  BlobPtr tmp = DRIFTSORT_ALLOCA(tail.size(), 1);
   tail.copy_nonoverlapping(tmp);
   CopyOnDrop gap_guard(tmp, tail, 1);
 
@@ -222,4 +222,4 @@ inline void small_sort_general(void *raw_base, size_t length, void *raw_scratch,
 }
 
 } // namespace small
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN

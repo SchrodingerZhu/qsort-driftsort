@@ -39,13 +39,34 @@
 #endif
 
 #ifdef __GNUC__
-#define DRIFTSORT_ALLOCA(n)                                                    \
-  (BlobPtr{n, static_cast<std::byte *>(__builtin_alloca(n))})
+#define DRIFTSORT_ALLOCA(elm_size, n)                                          \
+  (BlobPtr{elm_size, static_cast<std::byte *>(__builtin_alloca(elm_size * n))})
 #else
-#define DRIFTSORT_ALLOCA(n) (BlobPtr{n, static_cast<std::byte *>(_malloca(n))})
+#define DRIFTSORT_ALLOCA(elm_size, n)                                          \
+  (BlobPtr{elm_size, static_cast<std::byte *>(_malloca(elm_size * n))})
 #endif
 
-namespace driftsort {
+#if __has_attribute(visibility)
+#define DRIFTSORT_HIDDEN [[gnu::visibility("hidden")]]
+#define DRIFTSORT_EXPORT [[gnu::visibility("default")]]
+#else
+#define DRIFTSORT_HIDDEN
+#define DRIFTSORT_EXPORT
+#endif
+
+#if __has_attribute(uninitialized)
+#define DRIFTSORT_UNINITIALIZED [[clang::uninitialized]]
+#else
+#define DRIFTSORT_UNINITIALIZED
+#endif
+
+#if __has_attribute(noinline)
+#define DRIFTSORT_NOINLINE [[gnu::noinline]]
+#else
+#define DRIFTSORT_NOINLINE
+#endif
+
+namespace driftsort DRIFTSORT_HIDDEN {
 template <typename T> T saturating_sub(T a, T b) {
 #if __has_builtin(__builtin_sub_overflow)
   T res;
@@ -56,4 +77,4 @@ template <typename T> T saturating_sub(T a, T b) {
   return a < b ? 0 : a - b;
 #endif
 }
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN

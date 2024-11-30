@@ -31,7 +31,9 @@ BlobComparator compare_blob() {
   return {
       sizeof(T),
       [](const void *a, const void *b, void *) {
-        return Comp{}(*static_cast<const T *>(a), *static_cast<const T *>(b));
+        return Comp{}(*static_cast<const T *>(a), *static_cast<const T *>(b))
+                   ? -1
+                   : 1;
       },
       nullptr,
   };

@@ -11,7 +11,13 @@
 #include "driftsort/pivot.h"
 #include "driftsort/smallsort.h"
 #include <cstddef>
-namespace driftsort {
+namespace driftsort DRIFTSORT_HIDDEN {
+
+namespace drift {
+void sort(void *raw_v, size_t length, void *raw_scratch, size_t scratch_length,
+          bool eager_sort, const BlobComparator &comp);
+}
+
 namespace quick {
 /// Partitions `v` using pivot `p = v[pivot_pos]` and returns the number of
 /// elements less than `p`. The relative order of elements that compare < p and
@@ -102,10 +108,10 @@ inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
 /// overflow the stack or go quadratic.
 ///
 inline constexpr size_t SMALLSORT_THRESHOLD = 32;
-template <typename FallBackSort>
-void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
-                      size_t limit, void *left_ancestor_pivot,
-                      const BlobComparator &comp, FallBackSort fallback) {
+inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
+                             size_t scratch_length, size_t limit,
+                             void *left_ancestor_pivot,
+                             const BlobComparator &comp) {
   BlobPtr v = comp.lift(raw_v);
   BlobPtr scratch = comp.lift(raw_scratch);
 
@@ -116,7 +122,7 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
     }
 
     if (limit == 0) {
-      fallback(v, length, scratch, comp);
+      drift::sort(v, length, scratch, scratch_length, true, comp);
       return;
     }
 
@@ -125,7 +131,7 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
     size_t pivot_pos = pivot::choose_pivot(v, length, comp);
     DRIFTSORT_ASSUME(pivot_pos < length);
 
-    BlobPtr pivot_copy = DRIFTSORT_ALLOCA(v.size());
+    BlobPtr pivot_copy = DRIFTSORT_ALLOCA(v.size(), 1);
     v.offset(pivot_pos).copy_nonoverlapping(pivot_copy);
 
     // We choose a pivot, and check if this pivot is equal to our left
@@ -150,7 +156,7 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
           v, length, scratch, pivot_pos, true,
           comp.transform([](const void *a, const void *b, void *context) {
             BlobComparator &inner = *static_cast<BlobComparator *>(context);
-            return !inner(b, a);
+            return -static_cast<int>(!inner(b, a));
           }));
       v = v.offset(mid_eq);
       length -= mid_eq;
@@ -160,11 +166,11 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
 
     BlobPtr right = v.offset(left_partition_len);
     size_t right_len = length - left_partition_len;
-    stable_quicksort(right, right_len, scratch, limit, pivot_copy, comp,
-                     fallback);
+    stable_quicksort(right, right_len, scratch, scratch_length, limit,
+                     pivot_copy, comp);
     length = left_partition_len;
   }
 }
 
 } // namespace quick
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN

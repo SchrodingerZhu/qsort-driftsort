@@ -5,13 +5,14 @@
  */
 #pragma once
 #include "driftsort/blob.h"
-namespace driftsort {
+namespace driftsort DRIFTSORT_HIDDEN {
 namespace merge {
 /// Merges non-decreasing runs `v[..mid]` and `v[mid..]` using `scratch` as
 /// temporary storage, and stores the result into `v[..]`.
 
-void merge(void *raw_v, size_t length, void *raw_scratch, size_t scratch_length,
-           size_t mid, const BlobComparator &comp) {
+inline void merge(void *raw_v, size_t length, void *raw_scratch,
+                  size_t scratch_length, size_t mid,
+                  const BlobComparator &comp) {
   struct MergeState {
     BlobPtr start;
     BlobPtr end;
@@ -77,4 +78,4 @@ void merge(void *raw_v, size_t length, void *raw_scratch, size_t scratch_length,
   }
 }
 } // namespace merge
-} // namespace driftsort
+} // namespace driftsort DRIFTSORT_HIDDEN
