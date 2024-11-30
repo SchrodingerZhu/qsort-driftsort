@@ -38,10 +38,10 @@ void quick_sort_greater(std::vector<int> a, size_t limit) {
 
 void quick_sort_is_stable(std::vector<int> a, size_t limit) {
   std::vector<ElementWithSrc<int>> src{};
-  for (size_t i = 0; i < a.size(); i++) {
-    src.push_back(ElementWithSrc<int>(a[i]));
-    src.back().record_address();
-  }
+  for (auto &e : a)
+    src.push_back(ElementWithSrc<int>(e));
+  for (auto &e : src)
+    e.record_address();
   std::vector<ElementWithSrc<int>> scratch(src.size() + 16);
   stable_quicksort(src.data(), src.size(), scratch.data(), limit, {},
                    compare_blob<ElementWithSrc<int>>,
