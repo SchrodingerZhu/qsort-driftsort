@@ -7,7 +7,6 @@
 #pragma once
 
 #include "driftsort/blob.h"
-#include <concepts>
 #include <cstddef>
 
 namespace driftsort {
@@ -18,10 +17,8 @@ inline constexpr size_t PSEUDO_MEDIAN_REC_THRESHOLD = 64;
 /// Calculates the median of 3 elements.
 ///
 /// SAFETY: a, b, c must be valid initialized elements.
-
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-BlobPtr median_of_3(BlobPtr a, BlobPtr b, BlobPtr c, Comp comp) {
+template <typename Comp = Comparator>
+void *median_of_3(void *a, void *b, void *c, const BlobComparator<Comp> &comp) {
   // Compiler tends to make this branchless when sensible, and avoids the
   // third comparison when not.
   bool x = comp(a, b);
@@ -45,37 +42,42 @@ BlobPtr median_of_3(BlobPtr a, BlobPtr b, BlobPtr c, Comp comp) {
 ///
 /// SAFETY: a, b, c must point to the start of initialized regions of memory of
 /// at least n elements
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-BlobPtr recursive_median_of_3(BlobPtr a, BlobPtr b, BlobPtr c, size_t n,
-                              Comp comp) {
+template <typename Comp = Comparator>
+void *recursive_median_of_3(void *raw_a, void *raw_b, void *raw_c, size_t n,
+                            const BlobComparator<Comp> &comp) {
+  BlobPtr a = comp.lift(raw_a);
+  BlobPtr b = comp.lift(raw_b);
+  BlobPtr c = comp.lift(raw_c);
   if (n * 8 >= PSEUDO_MEDIAN_REC_THRESHOLD) {
     size_t n8 = n / 8;
-    a = recursive_median_of_3(a, a.offset(n8 * 4), a.offset(n8 * 7), n8, comp);
-    b = recursive_median_of_3(b, b.offset(n8 * 4), b.offset(n8 * 7), n8, comp);
-    c = recursive_median_of_3(c, c.offset(n8 * 4), c.offset(n8 * 7), n8, comp);
+    raw_a =
+        recursive_median_of_3(a, a.offset(n8 * 4), a.offset(n8 * 7), n8, comp);
+    raw_b =
+        recursive_median_of_3(b, b.offset(n8 * 4), b.offset(n8 * 7), n8, comp);
+    raw_c =
+        recursive_median_of_3(c, c.offset(n8 * 4), c.offset(n8 * 7), n8, comp);
   }
-  return median_of_3(a, b, c, comp);
+  return median_of_3(raw_a, raw_b, raw_c, comp);
 }
 
 /// Selects a pivot from `v`. Algorithm taken from glidesort by Orson Peters.
 ///
 /// This chooses a pivot by sampling an adaptive amount of points, approximating
 /// the quality of a median of sqrt(n) elements.
-
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-size_t choose_pivot(BlobPtr v, size_t length, Comp comp) {
+template <typename Comp = Comparator>
+size_t choose_pivot(void *raw_v, size_t length,
+                    const BlobComparator<Comp> &comp) {
+  BlobPtr v = comp.lift(raw_v);
   size_t length_div_8 = length / 8;
   BlobPtr a = v;
   BlobPtr b = v.offset(length_div_8 * 4);
   BlobPtr c = v.offset(length_div_8 * 7);
 
   if (length < PSEUDO_MEDIAN_REC_THRESHOLD)
-    return static_cast<size_t>(median_of_3(a, b, c, comp) - v);
+    return static_cast<size_t>(comp.lift(median_of_3(a, b, c, comp)) - v);
 
   return static_cast<size_t>(
-      recursive_median_of_3(a, b, c, length_div_8, comp) - v);
+      comp.lift(recursive_median_of_3(a, b, c, length_div_8, comp)) - v);
 }
 
 } // namespace pivot

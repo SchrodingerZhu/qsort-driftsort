@@ -6,7 +6,6 @@
 
 #include "driftsort/pivot.h"
 #include "../utils.hpp"
-#include "driftsort/blob.h"
 #include <fuzztest/fuzztest.h>
 #include <gtest/gtest.h>
 #include <vector>
@@ -16,7 +15,7 @@ using namespace driftsort::pivot;
 void pivot_selection(std::vector<int> data) {
   if (data.size() < 3)
     return;
-  size_t pivot = choose_pivot(data.data(), data.size(), compare_blob<int>);
+  size_t pivot = choose_pivot(data.data(), data.size(), compare_blob<int>());
   ASSERT_LT(pivot, data.size());
 }
 

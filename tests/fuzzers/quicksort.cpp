@@ -8,7 +8,6 @@
 #include "../utils.hpp"
 #include "fuzztest/fuzztest.h"
 #include <algorithm>
-#include <array>
 #include <fuzztest/fuzztest.h>
 #include <gtest/gtest.h>
 
@@ -20,9 +19,9 @@ template <class F> void quick_sort(std::vector<int> a, size_t limit) {
   std::sort(a.begin(), a.end(), F{});
   std::vector<int> scratch(a.size() + 16);
   stable_quicksort(b.data(), b.size(), scratch.data(), limit, {},
-                   compare_blob<int, F>,
-                   [](BlobPtr v, size_t length, BlobPtr, auto) {
-                     int *base = static_cast<int *>(v.get());
+                   compare_blob<int, F>(),
+                   [](void *v, size_t length, void *, auto) {
+                     int *base = static_cast<int *>(v);
                      std::sort(base, base + length, F{});
                    });
   ASSERT_EQ(a, b);
@@ -44,10 +43,10 @@ void quick_sort_is_stable(std::vector<int> a, size_t limit) {
     e.record_address();
   std::vector<ElementWithSrc<int>> scratch(src.size() + 16);
   stable_quicksort(src.data(), src.size(), scratch.data(), limit, {},
-                   compare_blob<ElementWithSrc<int>>,
-                   [](BlobPtr v, size_t length, BlobPtr, auto) {
+                   compare_blob<ElementWithSrc<int>>(),
+                   [](void *v, size_t length, void *, auto) {
                      ElementWithSrc<int> *base =
-                         static_cast<ElementWithSrc<int> *>(v.get());
+                         static_cast<ElementWithSrc<int> *>(v);
                      std::stable_sort(base, base + length);
                    });
   for (size_t i = 0; i < src.size(); i++) {

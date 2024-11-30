@@ -10,43 +10,9 @@
 #include "driftsort/common.h"
 #include "driftsort/pivot.h"
 #include "driftsort/smallsort.h"
-#include <concepts>
 #include <cstddef>
 namespace driftsort {
 namespace quick {
-
-struct PartitionState {
-  // The current element that is being looked at, scans left to right through
-  // slice.
-  BlobPtr scan;
-  // The start of the scratch auxiliary memory.
-  BlobPtr scratch;
-  // Counts the number of elements that went to the left side.
-  size_t num_left;
-  // Reverse scratch output pointer.
-  BlobPtr scratch_rev;
-
-  PartitionState(BlobPtr scan, BlobPtr scratch, size_t length)
-      : scratch(scratch), scan(scan), num_left(0),
-        scratch_rev(scratch.offset(length)) {}
-
-  /// Depending on the value of `towards_left` this function will write a value
-  /// to the growing left or right side of the scratch memory. This forms the
-  /// branchless core of the partition.
-  /// This function may be called at most `len` times. If it is called exactly
-  /// `len` times the scratch buffer then contains a copy of each element from
-  /// the scan buffer exactly once - a permutation, and num_left <= len.
-  BlobPtr partition_once(bool towards_left) {
-    scratch_rev = scratch_rev.offset(-1);
-    BlobPtr dst = towards_left ? scratch : scratch_rev;
-    dst = dst.offset(num_left);
-    scan.copy_nonoverlapping(dst);
-    num_left += towards_left;
-    scan = scan.offset(1);
-    return dst;
-  }
-};
-
 /// Partitions `v` using pivot `p = v[pivot_pos]` and returns the number of
 /// elements less than `p`. The relative order of elements that compare < p and
 /// those that compare >= p is preserved - it is a stable partition.
@@ -54,11 +20,45 @@ struct PartitionState {
 /// If `is_less` is not a strict total order or panics, `scratch.len() <
 /// v.len()`, or `pivot_pos >= v.len()`, the result and `v`'s state is sound but
 /// unspecified.
+template <typename Comp = Comparator>
+size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
+                        size_t pivot_pos, bool pivot_goes_left,
+                        const BlobComparator<Comp> &comp) {
 
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-size_t stable_partition(BlobPtr v, size_t length, BlobPtr scratch,
-                        size_t pivot_pos, bool pivot_goes_left, Comp comp) {
+  struct PartitionState {
+    // The current element that is being looked at, scans left to right through
+    // slice.
+    BlobPtr scan;
+    // The start of the scratch auxiliary memory.
+    BlobPtr scratch;
+    // Counts the number of elements that went to the left side.
+    size_t num_left;
+    // Reverse scratch output pointer.
+    BlobPtr scratch_rev;
+
+    PartitionState(BlobPtr scan, BlobPtr scratch, size_t length)
+        : scratch(scratch), scan(scan), num_left(0),
+          scratch_rev(scratch.offset(length)) {}
+
+    /// Depending on the value of `towards_left` this function will write a
+    /// value to the growing left or right side of the scratch memory. This
+    /// forms the branchless core of the partition. This function may be called
+    /// at most `len` times. If it is called exactly `len` times the scratch
+    /// buffer then contains a copy of each element from the scan buffer exactly
+    /// once - a permutation, and num_left <= len.
+    BlobPtr partition_once(bool towards_left) {
+      scratch_rev = scratch_rev.offset(-1);
+      BlobPtr dst = towards_left ? scratch : scratch_rev;
+      dst = dst.offset(num_left);
+      scan.copy_nonoverlapping(dst);
+      num_left += towards_left;
+      scan = scan.offset(1);
+      return dst;
+    }
+  };
+
+  BlobPtr v = comp.lift(raw_v);
+  BlobPtr scratch = comp.lift(raw_scratch);
 
   // The core idea is to write the values that compare as less-than to the left
   // side of `scratch`, while the values that compared as greater or equal than
@@ -102,12 +102,13 @@ size_t stable_partition(BlobPtr v, size_t length, BlobPtr scratch,
 /// overflow the stack or go quadratic.
 ///
 inline constexpr size_t SMALLSORT_THRESHOLD = 32;
-
 template <typename Comp, typename FallBackSort>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void stable_quicksort(BlobPtr v, size_t length, BlobPtr scratch, size_t limit,
-                      BlobPtr left_ancestor_pivot, Comp comp,
-                      FallBackSort fallback) {
+void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
+                      size_t limit, void *left_ancestor_pivot,
+                      const BlobComparator<Comp> &comp, FallBackSort fallback) {
+  BlobPtr v = comp.lift(raw_v);
+  BlobPtr scratch = comp.lift(raw_scratch);
+
   for (;;) {
     if (length <= SMALLSORT_THRESHOLD) {
       small::small_sort_general(v, length, scratch, comp);
@@ -132,7 +133,7 @@ void stable_quicksort(BlobPtr v, size_t length, BlobPtr scratch, size_t limit,
     // left and do not recurse on it. This gives O(n log k) sorting for k
     // distinct values, a strategy borrowed from pdqsort.
     bool perform_equal_partition = false;
-    if (left_ancestor_pivot.get() != nullptr) {
+    if (left_ancestor_pivot != nullptr) {
       perform_equal_partition = !comp(left_ancestor_pivot, v.offset(pivot_pos));
     }
 
@@ -147,10 +148,13 @@ void stable_quicksort(BlobPtr v, size_t length, BlobPtr scratch, size_t limit,
     if (perform_equal_partition) {
       size_t mid_eq =
           stable_partition(v, length, scratch, pivot_pos, true,
-                           [&](BlobPtr a, BlobPtr b) { return !comp(b, a); });
+                           comp.transform([](const void *a, const void *b,
+                                             void *context, Comparator inner) {
+                             return !inner(b, a, context);
+                           }));
       v = v.offset(mid_eq);
       length -= mid_eq;
-      left_ancestor_pivot = {};
+      left_ancestor_pivot = nullptr;
       continue;
     }
 

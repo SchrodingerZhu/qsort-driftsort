@@ -43,4 +43,32 @@ public:
     return (data - other.data) / static_cast<ptrdiff_t>(element_size);
   }
 };
+
+using Comparator = bool (*)(const void *, const void *, void *);
+
+template <typename Comp = Comparator> class BlobComparator {
+  size_t element_size;
+  Comp compare;
+  void *context;
+
+public:
+  constexpr BlobComparator(size_t element_size, Comp compare, void *context)
+      : element_size(element_size), compare(compare), context(context) {}
+  constexpr BlobPtr lift(void *data) const {
+    return {element_size, static_cast<std::byte *>(data)};
+  }
+  bool operator()(BlobPtr a, BlobPtr b) const {
+    return compare(a.get(), b.get(), context);
+  }
+  bool operator()(const void *a, const void *b) const {
+    return compare(a, b, context);
+  }
+  template <typename Transform> auto transform(Transform transform) const {
+    auto comp = [&](const void *a, const void *b, void *context) {
+      return transform(a, b, context, compare);
+    };
+    return BlobComparator<decltype(comp)>{element_size, comp, context};
+  }
+};
+
 } // namespace driftsort

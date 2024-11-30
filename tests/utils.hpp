@@ -27,9 +27,14 @@ public:
 };
 
 template <typename T, std::predicate<const T &, const T &> Comp = std::less<>>
-bool compare_blob(BlobPtr a, BlobPtr b) {
-  return Comp{}(*static_cast<const T *>(a.get()),
-                *static_cast<const T *>(b.get()));
+BlobComparator<Comparator> compare_blob() {
+  return {
+      sizeof(T),
+      [](const void *a, const void *b, void *) {
+        return Comp{}(*static_cast<const T *>(a), *static_cast<const T *>(b));
+      },
+      nullptr,
+  };
 }
 
 } // namespace driftsort

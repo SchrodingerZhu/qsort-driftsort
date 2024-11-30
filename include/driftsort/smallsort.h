@@ -8,14 +8,15 @@
 
 #include "driftsort/blob.h"
 #include "driftsort/common.h"
-#include <concepts>
 #include <initializer_list>
 
 namespace driftsort {
 namespace small {
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp comp) {
+template <typename Comp = Comparator>
+inline void sort4_stable(void *raw_base, void *raw_dest,
+                         const BlobComparator<Comp> &comp) {
+  BlobPtr base = comp.lift(raw_base);
+  BlobPtr dest = comp.lift(raw_dest);
   bool c1 = comp(base.offset(1), base.offset(0));
   bool c2 = comp(base.offset(3), base.offset(2));
 
@@ -54,15 +55,15 @@ inline void sort4_stable(BlobPtr base, BlobPtr dest, Comp comp) {
 /// Original idea for bi-directional merging by Igor van den Hoven (quadsort),
 /// adapted to only use merge up and down. In contrast to the original
 /// parity_merge function, it performs 2 writes instead of 4 per iteration.
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp comp) {
+template <typename Comp = Comparator>
+void bidirectional_merge(void *raw_src, size_t len, void *raw_dst,
+                         const BlobComparator<Comp> &comp) {
   struct MergeResult {
     BlobPtr left;
     BlobPtr right;
     BlobPtr dest;
 
-    void merge_up(Comp comp) {
+    void merge_up(const BlobComparator<Comp> &comp) {
       bool advance_left = !comp(right, left);
       BlobPtr src = advance_left ? left : right;
       src.copy_nonoverlapping(dest);
@@ -71,7 +72,7 @@ void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp comp) {
       dest = dest.offset(1);
     }
 
-    void merge_down(Comp comp) {
+    void merge_down(const BlobComparator<Comp> &comp) {
       bool retreat_right = !comp(right, left);
       BlobPtr src = retreat_right ? right : left;
       src.copy_nonoverlapping(dest);
@@ -80,6 +81,9 @@ void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp comp) {
       dest = dest.offset(-1);
     }
   };
+
+  BlobPtr src = comp.lift(raw_src);
+  BlobPtr dst = comp.lift(raw_dst);
 
   size_t half = len / 2;
   DRIFTSORT_ASSUME(half > 0);
@@ -111,31 +115,36 @@ void bidirectional_merge(BlobPtr src, size_t len, BlobPtr dst, Comp comp) {
   DRIFTSORT_ASSUME(forward.right == right_end);
 }
 
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void sort8_stable(BlobPtr base, BlobPtr dest, BlobPtr scratch, Comp &&comp) {
+template <typename Comp = Comparator>
+void sort8_stable(void *raw_base, void *raw_dest, void *raw_scratch,
+                  const BlobComparator<Comp> &comp) {
+  BlobPtr base = comp.lift(raw_base);
+  BlobPtr dest = comp.lift(raw_dest);
+  BlobPtr scratch = comp.lift(raw_scratch);
   sort4_stable(base, scratch, comp);
   sort4_stable(base.offset(4), scratch.offset(4), comp);
   bidirectional_merge(scratch, 8, dest, comp);
 }
 
-class CopyOnDrop {
-  BlobPtr src;
-  BlobPtr dest;
-  size_t length;
-
-public:
-  constexpr CopyOnDrop(BlobPtr src, BlobPtr dest, size_t length)
-      : src(src), dest(dest), length(length) {}
-  ~CopyOnDrop() { src.copy_nonoverlapping(dest, length); }
-  void set_new_dst(BlobPtr new_dest) { dest = new_dest; }
-  BlobPtr get_dst() const { return dest; }
-};
-
 /// Sorts range [begin, tail] assuming [begin, tail) is already sorted.
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void insert_tail(BlobPtr begin, BlobPtr tail, Comp comp) {
+template <typename Comp = Comparator>
+void insert_tail(void *raw_begin, void *raw_tail,
+                 const BlobComparator<Comp> &comp) {
+  class CopyOnDrop {
+    BlobPtr src;
+    BlobPtr dest;
+    size_t length;
+
+  public:
+    constexpr CopyOnDrop(BlobPtr src, BlobPtr dest, size_t length)
+        : src(src), dest(dest), length(length) {}
+    ~CopyOnDrop() { src.copy_nonoverlapping(dest, length); }
+    void set_new_dst(BlobPtr new_dest) { dest = new_dest; }
+    BlobPtr get_dst() const { return dest; }
+  };
+
+  BlobPtr begin = comp.lift(raw_begin);
+  BlobPtr tail = comp.lift(raw_tail);
   BlobPtr cursor = tail.offset(-1);
 
   // fast return if tail is already sorted
@@ -158,11 +167,11 @@ void insert_tail(BlobPtr begin, BlobPtr tail, Comp comp) {
 }
 
 /// Sort `v` assuming `v[..offset]` is already sorted.
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void insertion_sort_shift_left(BlobPtr begin, size_t total, size_t offset,
-                               Comp comp) {
+template <typename Comp = Comparator>
+void insertion_sort_shift_left(void *raw_begin, size_t total, size_t offset,
+                               const BlobComparator<Comp> &comp) {
   DRIFTSORT_ASSUME(offset > 0 && offset < total);
+  BlobPtr begin = comp.lift(raw_begin);
   BlobPtr end = begin.offset(total);
   BlobPtr tail = begin.offset(offset);
   while (tail != end) {
@@ -172,10 +181,11 @@ void insertion_sort_shift_left(BlobPtr begin, size_t total, size_t offset,
 }
 
 // scratch pad is of (16 + length) in size
-template <typename Comp>
-  requires std::predicate<Comp, BlobPtr, BlobPtr>
-void small_sort_general(BlobPtr base, size_t length, BlobPtr scratch,
-                        Comp comp) {
+template <typename Comp = Comparator>
+void small_sort_general(void *raw_base, size_t length, void *raw_scratch,
+                        const BlobComparator<Comp> &comp) {
+  BlobPtr base = comp.lift(raw_base);
+  BlobPtr scratch = comp.lift(raw_scratch);
   if (length < 2)
     return;
 

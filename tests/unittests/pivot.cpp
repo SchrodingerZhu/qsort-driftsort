@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <array>
 #include <gtest/gtest.h>
-#include <numeric>
 using namespace driftsort;
 using namespace driftsort::pivot;
 
@@ -22,7 +21,7 @@ TEST(DriftSortUnitTests, median_of_3) {
     BlobPtr b = &data[1];
     BlobPtr c = &data[2];
 
-    BlobPtr result = median_of_3(a, b, c, compare_blob<int>);
-    ASSERT_EQ(*static_cast<int *>(result.get()), 2);
+    void *result = median_of_3(a, b, c, compare_blob<int>());
+    ASSERT_EQ(*static_cast<int *>(result), 2);
   } while (std::next_permutation(data.begin(), data.end()));
 }
