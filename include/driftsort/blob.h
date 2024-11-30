@@ -46,13 +46,14 @@ public:
 
 using Comparator = bool (*)(const void *, const void *, void *);
 
-template <typename Comp = Comparator> class BlobComparator {
+class BlobComparator {
   size_t element_size;
-  Comp compare;
+  Comparator compare;
   void *context;
 
 public:
-  constexpr BlobComparator(size_t element_size, Comp compare, void *context)
+  constexpr BlobComparator(size_t element_size, Comparator compare,
+                           void *context)
       : element_size(element_size), compare(compare), context(context) {}
   constexpr BlobPtr lift(void *data) const {
     return {element_size, static_cast<std::byte *>(data)};
@@ -60,11 +61,9 @@ public:
   bool operator()(const void *a, const void *b) const {
     return compare(a, b, context);
   }
-  template <typename Transform> auto transform(Transform transform) const {
-    auto comp = [&](const void *a, const void *b, void *context) {
-      return transform(a, b, context, compare);
-    };
-    return BlobComparator<decltype(comp)>{element_size, comp, context};
+  auto transform(Comparator transform) const {
+    return BlobComparator{element_size, transform,
+                          const_cast<void *>(static_cast<const void *>(this))};
   }
 };
 

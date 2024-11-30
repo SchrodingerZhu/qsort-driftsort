@@ -20,10 +20,10 @@ namespace quick {
 /// If `is_less` is not a strict total order or panics, `scratch.len() <
 /// v.len()`, or `pivot_pos >= v.len()`, the result and `v`'s state is sound but
 /// unspecified.
-template <typename Comp = Comparator>
-size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
-                        size_t pivot_pos, bool pivot_goes_left,
-                        const BlobComparator<Comp> &comp) {
+
+inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
+                               size_t pivot_pos, bool pivot_goes_left,
+                               const BlobComparator &comp) {
 
   struct PartitionState {
     // The current element that is being looked at, scans left to right through
@@ -102,10 +102,10 @@ size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
 /// overflow the stack or go quadratic.
 ///
 inline constexpr size_t SMALLSORT_THRESHOLD = 32;
-template <typename Comp, typename FallBackSort>
+template <typename FallBackSort>
 void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
                       size_t limit, void *left_ancestor_pivot,
-                      const BlobComparator<Comp> &comp, FallBackSort fallback) {
+                      const BlobComparator &comp, FallBackSort fallback) {
   BlobPtr v = comp.lift(raw_v);
   BlobPtr scratch = comp.lift(raw_scratch);
 
@@ -146,12 +146,12 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
     }
 
     if (perform_equal_partition) {
-      size_t mid_eq =
-          stable_partition(v, length, scratch, pivot_pos, true,
-                           comp.transform([](const void *a, const void *b,
-                                             void *context, const Comp &inner) {
-                             return !inner(b, a, context);
-                           }));
+      size_t mid_eq = stable_partition(
+          v, length, scratch, pivot_pos, true,
+          comp.transform([](const void *a, const void *b, void *context) {
+            BlobComparator &inner = *static_cast<BlobComparator *>(context);
+            return !inner(b, a);
+          }));
       v = v.offset(mid_eq);
       length -= mid_eq;
       left_ancestor_pivot = nullptr;

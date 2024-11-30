@@ -27,7 +27,7 @@ public:
 };
 
 template <typename T, std::predicate<const T &, const T &> Comp = std::less<>>
-BlobComparator<Comparator> compare_blob() {
+BlobComparator compare_blob() {
   return {
       sizeof(T),
       [](const void *a, const void *b, void *) {

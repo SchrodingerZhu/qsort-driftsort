@@ -17,8 +17,9 @@ inline constexpr size_t PSEUDO_MEDIAN_REC_THRESHOLD = 64;
 /// Calculates the median of 3 elements.
 ///
 /// SAFETY: a, b, c must be valid initialized elements.
-template <typename Comp = Comparator>
-void *median_of_3(void *a, void *b, void *c, const BlobComparator<Comp> &comp) {
+
+inline void *median_of_3(void *a, void *b, void *c,
+                         const BlobComparator &comp) {
   // Compiler tends to make this branchless when sensible, and avoids the
   // third comparison when not.
   bool x = comp(a, b);
@@ -42,9 +43,9 @@ void *median_of_3(void *a, void *b, void *c, const BlobComparator<Comp> &comp) {
 ///
 /// SAFETY: a, b, c must point to the start of initialized regions of memory of
 /// at least n elements
-template <typename Comp = Comparator>
-void *recursive_median_of_3(void *raw_a, void *raw_b, void *raw_c, size_t n,
-                            const BlobComparator<Comp> &comp) {
+
+inline void *recursive_median_of_3(void *raw_a, void *raw_b, void *raw_c,
+                                   size_t n, const BlobComparator &comp) {
   BlobPtr a = comp.lift(raw_a);
   BlobPtr b = comp.lift(raw_b);
   BlobPtr c = comp.lift(raw_c);
@@ -64,9 +65,9 @@ void *recursive_median_of_3(void *raw_a, void *raw_b, void *raw_c, size_t n,
 ///
 /// This chooses a pivot by sampling an adaptive amount of points, approximating
 /// the quality of a median of sqrt(n) elements.
-template <typename Comp = Comparator>
-size_t choose_pivot(void *raw_v, size_t length,
-                    const BlobComparator<Comp> &comp) {
+
+inline size_t choose_pivot(void *raw_v, size_t length,
+                           const BlobComparator &comp) {
   BlobPtr v = comp.lift(raw_v);
   size_t length_div_8 = length / 8;
   BlobPtr a = v;
