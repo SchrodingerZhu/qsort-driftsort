@@ -1,5 +1,9 @@
 include(FetchContent)
 
+if (MSVC)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif()
+
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
