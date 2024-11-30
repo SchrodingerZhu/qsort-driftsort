@@ -149,7 +149,7 @@ void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
       size_t mid_eq =
           stable_partition(v, length, scratch, pivot_pos, true,
                            comp.transform([](const void *a, const void *b,
-                                             void *context, Comparator inner) {
+                                             void *context, const Comp &inner) {
                              return !inner(b, a, context);
                            }));
       v = v.offset(mid_eq);

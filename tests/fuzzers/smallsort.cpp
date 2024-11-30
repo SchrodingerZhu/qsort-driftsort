@@ -33,7 +33,8 @@ void sort4_is_stable(std::array<int, 4> in) {
   std::array<ElementWithSrc<int>, 4> dst;
   for (auto &e : src)
     e.record_address();
-  sort4_stable(src.begin(), dst.begin(), compare_blob<int, std::less<>>());
+  sort4_stable(src.begin(), dst.begin(),
+               compare_blob<ElementWithSrc<int>, std::less<>>());
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       auto x = dst[i];
