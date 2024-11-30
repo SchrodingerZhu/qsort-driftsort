@@ -16,10 +16,10 @@
 #include <cstdint>
 
 namespace driftsort DRIFTSORT_HIDDEN {
-
-DRIFTSORT_NOINLINE
-inline void trivial_heap_sort(void *raw_v, size_t length,
-                              const BlobComparator &comp) {
+template <typename Comp>
+DRIFTSORT_NOINLINE inline void
+trivial_heap_sort(void *raw_v, size_t length,
+                  const BlobComparator<Comp> &comp) {
   BlobPtr array = comp.lift(raw_v);
   size_t end = length;
   size_t start = end / 2;
@@ -66,8 +66,9 @@ inline size_t guess_alignment(size_t element_size, void *start_addr) {
   return static_cast<size_t>(masked & -masked);
 }
 
-DRIFTSORT_NOINLINE
-inline void driftsort(void *raw_v, size_t length, const BlobComparator &comp) {
+template <typename Comp>
+DRIFTSORT_NOINLINE inline void driftsort(void *raw_v, size_t length,
+                                         const BlobComparator<Comp> &comp) {
   BlobPtr v = comp.lift(raw_v);
   constexpr size_t MAX_FULL_ALLOC_BYTES = 8 * 1024 * 1024;
   constexpr size_t HEAP_ALLOC_THRESHOLD = 4096;
@@ -85,15 +86,15 @@ inline void driftsort(void *raw_v, size_t length, const BlobComparator &comp) {
     drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
   }
 }
-
+template <typename Comp>
 inline void qsort_r(void *data, size_t element_size, size_t length,
-                    Comparator compare, void *context) {
+                    Comp compare) {
   if (element_size == 0)
     return;
   if (DRIFTSORT_LIKELY(length < 2))
     return;
 
-  BlobComparator comp{element_size, compare, context};
+  BlobComparator<Comp> comp{element_size, compare};
 
   // Insertion sort is always fine because we never call comparison on temporary
   // space

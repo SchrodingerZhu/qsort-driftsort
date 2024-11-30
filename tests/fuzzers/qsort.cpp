@@ -18,11 +18,9 @@ template <class F> void qsort(std::vector<int> a) {
   std::sort(a.begin(), a.end(), F{});
   std::vector<int> scratch(a.size() + 16);
   driftsort::qsort_r(
-      b.data(), sizeof(int), b.size(),
-      [](const void *a, const void *b, void *context) {
+      b.data(), sizeof(int), b.size(), [](const void *a, const void *b) {
         return -F{}(*static_cast<const int *>(a), *static_cast<const int *>(b));
-      },
-      nullptr);
+      });
   ASSERT_EQ(a, b);
 }
 

@@ -14,8 +14,9 @@
 namespace driftsort DRIFTSORT_HIDDEN {
 
 namespace drift {
+template <typename Comp>
 void sort(void *raw_v, size_t length, void *raw_scratch, size_t scratch_length,
-          bool eager_sort, const BlobComparator &comp);
+          bool eager_sort, const BlobComparator<Comp> &comp);
 }
 
 namespace quick {
@@ -27,10 +28,10 @@ namespace quick {
 /// v.len()`, or `pivot_pos >= v.len()`, the result and `v`'s state is sound but
 /// unspecified.
 
-template <bool InvertComparison>
+template <bool InvertComparison, typename Comp>
 inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
                                size_t pivot_pos, bool pivot_goes_left,
-                               const BlobComparator &comp) {
+                               const BlobComparator<Comp> &comp) {
   auto compare = [&comp](const void *a, const void *b) {
     if constexpr (InvertComparison)
       return !comp(b, a);
@@ -114,10 +115,11 @@ inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
 /// overflow the stack or go quadratic.
 ///
 inline constexpr size_t SMALLSORT_THRESHOLD = 32;
+template <typename Comp>
 inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
                              size_t scratch_length, size_t limit,
                              void *left_ancestor_pivot,
-                             const BlobComparator &comp) {
+                             const BlobComparator<Comp> &comp) {
   BlobPtr v = comp.lift(raw_v);
   BlobPtr scratch = comp.lift(raw_scratch);
 

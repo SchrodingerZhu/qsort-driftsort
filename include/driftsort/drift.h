@@ -17,9 +17,10 @@
 
 namespace driftsort DRIFTSORT_HIDDEN {
 namespace drift {
+template <typename Comp>
 inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
                              size_t scratch_length,
-                             const BlobComparator &comp) {
+                             const BlobComparator<Comp> &comp) {
   size_t limit = std::bit_width(2 * (length | 1));
   quick::stable_quicksort(raw_v, length, raw_scratch, scratch_length, limit,
                           nullptr, comp);
@@ -45,8 +46,9 @@ public:
 ///
 /// Returns the length of the run, and a bool that is false when the run
 /// is ascending, and true if the run strictly descending.
+template <typename Comp>
 inline bool find_existing_run(void *raw_v, size_t length,
-                              const BlobComparator &comp, size_t &out) {
+                              const BlobComparator<Comp> &comp, size_t &out) {
   if (length < 2) {
     out = length;
     return false;
@@ -75,9 +77,10 @@ inline bool find_existing_run(void *raw_v, size_t length,
 /// run. If not, the result depends on the value of `eager_sort`. If it is true,
 /// then a sorted run of length `SMALL_SORT_THRESHOLD` is returned, and if it
 /// is false an unsorted run of length `min_good_run_len` is returned.
+template <typename Comp>
 inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
                            size_t scratch_length, size_t min_good_run_length,
-                           bool eager_sort, const BlobComparator &comp) {
+                           bool eager_sort, const BlobComparator<Comp> &comp) {
   auto reverse = [](BlobPtr array, size_t length) {
     for (size_t i = 0; i < length / 2; i++) {
       auto a = array.offset(i);
@@ -115,9 +118,11 @@ inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
 }
 
 // Lazy logical runs as in Glidesort.
+template <typename Comp>
 inline RunState logical_merge(void *raw_v, size_t length, void *raw_scratch,
                               size_t scratch_length, RunState left,
-                              RunState right, const BlobComparator &comp) {
+                              RunState right,
+                              const BlobComparator<Comp> &comp) {
   BlobPtr v = comp.lift(raw_v);
   bool fit_in_scratch = length <= scratch_length;
   if (!fit_in_scratch || left.is_sorted() || right.is_sorted()) {
@@ -186,10 +191,10 @@ inline uint64_t merge_tree_scale_factor(size_t n) {
   uint64_t n64 = static_cast<uint64_t>(n);
   return ((uint64_t{1} << uint64_t{62}) + n64 - uint64_t{1}) / n64;
 }
-
+template <typename Comp>
 inline void sort(void *raw_v, size_t length, void *raw_scratch,
                  size_t scratch_length, bool eager_sort,
-                 const BlobComparator &comp) {
+                 const BlobComparator<Comp> &comp) {
   if (length < 2)
     return;
   size_t scale_factor = merge_tree_scale_factor(length);

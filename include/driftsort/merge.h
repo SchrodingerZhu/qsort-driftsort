@@ -10,9 +10,10 @@ namespace merge {
 /// Merges non-decreasing runs `v[..mid]` and `v[mid..]` using `scratch` as
 /// temporary storage, and stores the result into `v[..]`.
 
+template <typename Comp>
 inline void merge(void *raw_v, size_t length, void *raw_scratch,
                   size_t scratch_length, size_t mid,
-                  const BlobComparator &comp) {
+                  const BlobComparator<Comp> &comp) {
   struct MergeState {
     BlobPtr start;
     BlobPtr end;
@@ -24,7 +25,7 @@ inline void merge(void *raw_v, size_t length, void *raw_scratch,
     }
 
     void merge_up(BlobPtr right, BlobPtr right_end,
-                  const BlobComparator &comp) {
+                  const BlobComparator<Comp> &comp) {
       BlobPtr &left = start;
       BlobPtr &out = dest;
 
@@ -39,7 +40,7 @@ inline void merge(void *raw_v, size_t length, void *raw_scratch,
     }
 
     void merge_down(BlobPtr left_end, BlobPtr right_end, BlobPtr out,
-                    const BlobComparator &comp) {
+                    const BlobComparator<Comp> &comp) {
       do {
         BlobPtr left = dest.offset(-1);
         BlobPtr right = end.offset(-1);

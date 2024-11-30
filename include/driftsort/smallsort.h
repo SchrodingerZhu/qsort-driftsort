@@ -12,9 +12,9 @@
 
 namespace driftsort DRIFTSORT_HIDDEN {
 namespace small {
-
+template <typename Comp>
 inline void sort4_stable(void *raw_base, void *raw_dest,
-                         const BlobComparator &comp) {
+                         const BlobComparator<Comp> &comp) {
   BlobPtr base = comp.lift(raw_base);
   BlobPtr dest = comp.lift(raw_dest);
   bool c1 = comp(base.offset(1), base.offset(0));
@@ -55,15 +55,15 @@ inline void sort4_stable(void *raw_base, void *raw_dest,
 /// Original idea for bi-directional merging by Igor van den Hoven (quadsort),
 /// adapted to only use merge up and down. In contrast to the original
 /// parity_merge function, it performs 2 writes instead of 4 per iteration.
-
+template <typename Comp>
 inline void bidirectional_merge(void *raw_src, size_t len, void *raw_dst,
-                                const BlobComparator &comp) {
+                                const BlobComparator<Comp> &comp) {
   struct MergeResult {
     BlobPtr left;
     BlobPtr right;
     BlobPtr dest;
 
-    void merge_up(const BlobComparator &comp) {
+    void merge_up(const BlobComparator<Comp> &comp) {
       bool advance_left = !comp(right, left);
       BlobPtr src = advance_left ? left : right;
       src.copy_nonoverlapping(dest);
@@ -72,7 +72,7 @@ inline void bidirectional_merge(void *raw_src, size_t len, void *raw_dst,
       dest = dest.offset(1);
     }
 
-    void merge_down(const BlobComparator &comp) {
+    void merge_down(const BlobComparator<Comp> &comp) {
       bool retreat_right = !comp(right, left);
       BlobPtr src = retreat_right ? right : left;
       src.copy_nonoverlapping(dest);
@@ -114,9 +114,9 @@ inline void bidirectional_merge(void *raw_src, size_t len, void *raw_dst,
   DRIFTSORT_ASSUME(forward.left == left_end);
   DRIFTSORT_ASSUME(forward.right == right_end);
 }
-
+template <typename Comp>
 inline void sort8_stable(void *raw_base, void *raw_dest, void *raw_scratch,
-                         const BlobComparator &comp) {
+                         const BlobComparator<Comp> &comp) {
   BlobPtr base = comp.lift(raw_base);
   BlobPtr dest = comp.lift(raw_dest);
   BlobPtr scratch = comp.lift(raw_scratch);
@@ -126,9 +126,9 @@ inline void sort8_stable(void *raw_base, void *raw_dest, void *raw_scratch,
 }
 
 /// Sorts range [begin, tail] assuming [begin, tail) is already sorted.
-
+template <typename Comp>
 inline void insert_tail(void *raw_begin, void *raw_tail,
-                        const BlobComparator &comp) {
+                        const BlobComparator<Comp> &comp) {
   class CopyOnDrop {
     BlobPtr src;
     BlobPtr dest;
@@ -166,10 +166,10 @@ inline void insert_tail(void *raw_begin, void *raw_tail,
 }
 
 /// Sort `v` assuming `v[..offset]` is already sorted.
-
+template <typename Comp>
 inline void insertion_sort_shift_left(void *raw_begin, size_t total,
                                       size_t offset,
-                                      const BlobComparator &comp) {
+                                      const BlobComparator<Comp> &comp) {
   DRIFTSORT_ASSUME(offset > 0 && offset < total);
   BlobPtr begin = comp.lift(raw_begin);
   BlobPtr end = begin.offset(total);
@@ -181,9 +181,9 @@ inline void insertion_sort_shift_left(void *raw_begin, size_t total,
 }
 
 // scratch pad is of (16 + length) in size
-
+template <typename Comp>
 inline void small_sort_general(void *raw_base, size_t length, void *raw_scratch,
-                               const BlobComparator &comp) {
+                               const BlobComparator<Comp> &comp) {
   BlobPtr base = comp.lift(raw_base);
   BlobPtr scratch = comp.lift(raw_scratch);
   if (length < 2)

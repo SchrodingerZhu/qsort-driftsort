@@ -44,22 +44,18 @@ public:
   }
 };
 
-using Comparator = int (*)(const void *, const void *, void *);
-
-class BlobComparator {
+template <class Comparator> class BlobComparator {
   size_t element_size;
   Comparator compare;
-  void *context;
 
 public:
-  constexpr BlobComparator(size_t element_size, Comparator compare,
-                           void *context)
-      : element_size(element_size), compare(compare), context(context) {}
+  constexpr BlobComparator(size_t element_size, Comparator compare)
+      : element_size(element_size), compare(compare) {}
   constexpr BlobPtr lift(void *data) const {
     return {element_size, static_cast<std::byte *>(data)};
   }
   bool operator()(const void *a, const void *b) const {
-    return compare(a, b, context) < 0;
+    return compare(a, b) < 0;
   }
 };
 
