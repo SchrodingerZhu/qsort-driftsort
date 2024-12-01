@@ -13,7 +13,7 @@
 #include <new>
 #include <type_traits>
 
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 
 // A fat pointer with size
 class BlobPtr {
@@ -73,4 +73,4 @@ public:
   }
 };
 
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort

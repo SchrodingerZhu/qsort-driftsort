@@ -5,7 +5,7 @@
  */
 #pragma once
 #include "driftsort/blob.h"
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 namespace merge {
 /// Merges non-decreasing runs `v[..mid]` and `v[mid..]` using `scratch` as
 /// temporary storage, and stores the result into `v[..]`.
@@ -79,4 +79,4 @@ inline void merge(void *raw_v, size_t length, void *raw_scratch,
   }
 }
 } // namespace merge
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort

@@ -67,7 +67,7 @@
 #define DRIFTSORT_NOINLINE
 #endif
 
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 template <typename T> T saturating_sub(T a, T b) {
 #if __has_builtin(__builtin_sub_overflow)
   T res;
@@ -78,4 +78,4 @@ template <typename T> T saturating_sub(T a, T b) {
   return a < b ? 0 : a - b;
 #endif
 }
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort

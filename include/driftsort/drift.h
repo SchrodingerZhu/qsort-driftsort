@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 namespace drift {
 template <typename Comp>
 inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
@@ -278,4 +278,4 @@ inline void sort(void *raw_v, size_t length, void *raw_scratch,
 }
 
 } // namespace drift
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort

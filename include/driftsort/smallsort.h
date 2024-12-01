@@ -10,7 +10,7 @@
 #include "driftsort/common.h"
 #include <initializer_list>
 
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 namespace small {
 template <typename Comp>
 inline void sort4_stable(void *raw_base, void *raw_dest,
@@ -223,4 +223,4 @@ inline void small_sort_general(void *raw_base, size_t length, void *raw_scratch,
 }
 
 } // namespace small
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort

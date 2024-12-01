@@ -15,7 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace driftsort DRIFTSORT_HIDDEN {
+namespace DRIFTSORT_HIDDEN driftsort {
 template <typename Comp>
 DRIFTSORT_NOINLINE inline void
 trivial_heap_sort(void *raw_v, size_t length,
@@ -117,4 +117,4 @@ inline void qsort_r(void *data, size_t element_size, size_t length,
 
   driftsort(data, length, comp);
 }
-} // namespace driftsort DRIFTSORT_HIDDEN
+} // namespace DRIFTSORT_HIDDEN driftsort
