@@ -78,6 +78,8 @@ DRIFTSORT_NOINLINE inline void driftsort(void *raw_v, size_t length,
   alloc_length = std::max(alloc_length, quick::SMALLSORT_THRESHOLD + 16);
   if (alloc_length > HEAP_ALLOC_THRESHOLD) {
     auto raw_scratch = ::operator new(alloc_length * v.size());
+    if (DRIFTSORT_UNLIKELY(raw_scratch == nullptr))
+      return trivial_heap_sort(raw_v, length, comp);
     BlobPtr scratch{v.size(), static_cast<std::byte *>(raw_scratch)};
     drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
     ::operator delete(raw_scratch);
