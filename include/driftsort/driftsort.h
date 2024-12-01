@@ -105,7 +105,7 @@ inline void qsort_r(void *data, size_t element_size, size_t length,
   // Insertion sort is always fine because we never call comparison on temporary
   // space
   constexpr size_t MAX_LEN_ALWAYS_INSERTION_SORT = 20;
-  constexpr size_t MAX_ALIGNMENT = 1024;
+  constexpr size_t MAX_ALIGNMENT = 32;
   if (DRIFTSORT_LIKELY(length <= MAX_LEN_ALWAYS_INSERTION_SORT))
     return small::insertion_sort_shift_left(data, length, length, comp);
 
