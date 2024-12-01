@@ -106,8 +106,10 @@ inline void qsort_r(void *data, size_t element_size, size_t length,
   // space
   constexpr size_t MAX_LEN_ALWAYS_INSERTION_SORT = 20;
   constexpr size_t MAX_ALIGNMENT = 32;
-  if (DRIFTSORT_LIKELY(length <= MAX_LEN_ALWAYS_INSERTION_SORT))
-    return small::insertion_sort_shift_left(data, length, length, comp);
+  if (DRIFTSORT_LIKELY(length <= MAX_LEN_ALWAYS_INSERTION_SORT)) {
+    BlobPtr v = comp.lift(data);
+    return small::insertion_sort_shift_left(v.offset(1), length, 1, comp);
+  }
 
   // unfortunately, due to qsort_r's restriction, we cannot really know the
   // alignment of over-aligned types, so we have to fall back to slow path.
