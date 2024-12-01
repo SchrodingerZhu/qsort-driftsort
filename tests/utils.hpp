@@ -28,10 +28,10 @@ public:
 
 template <typename T, std::predicate<const T &, const T &> Comp = std::less<>>
 auto compare_blob() {
-  return BlobComparator{sizeof(T), [](const void *a, const void *b) {
-                          return -Comp{}(*static_cast<const T *>(a),
-                                         *static_cast<const T *>(b));
-                        }};
+  return BlobComparator{
+      sizeof(T), alignof(T), [](const void *a, const void *b) {
+        return -Comp{}(*static_cast<const T *>(a), *static_cast<const T *>(b));
+      }};
 }
 
 } // namespace driftsort

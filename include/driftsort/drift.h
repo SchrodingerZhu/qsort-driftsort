@@ -82,7 +82,8 @@ inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
                            size_t scratch_length, size_t min_good_run_length,
                            bool eager_sort, const BlobComparator<Comp> &comp) {
   auto v = comp.lift(raw_v);
-  auto tmp = DRIFTSORT_ALLOCA(v.size(), 1);
+  auto alloca_space = DRIFTSORT_ALLOCA(comp, 1);
+  BlobPtr tmp = comp.lift_alloca(alloca_space);
   auto reverse = [&](BlobPtr array, size_t length) {
     for (size_t i = 0; i < length / 2; i++) {
       auto a = array.offset(i);

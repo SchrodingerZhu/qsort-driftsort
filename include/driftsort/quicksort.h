@@ -139,7 +139,8 @@ inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
     size_t pivot_pos = pivot::choose_pivot(v, length, comp);
     DRIFTSORT_ASSUME(pivot_pos < length);
 
-    BlobPtr pivot_copy = DRIFTSORT_ALLOCA(v.size(), 1);
+    auto pivot_copy_space = DRIFTSORT_ALLOCA(comp, 1);
+    BlobPtr pivot_copy = comp.lift_alloca(pivot_copy_space);
     v.offset(pivot_pos).copy_nonoverlapping(pivot_copy);
 
     // We choose a pivot, and check if this pivot is equal to our left

@@ -8,7 +8,9 @@
 
 #include "driftsort/common.h"
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <new>
 #include <type_traits>
 
 namespace driftsort DRIFTSORT_HIDDEN {
@@ -46,16 +48,28 @@ public:
 
 template <class Comparator> class BlobComparator {
   size_t element_size;
+  size_t alignment;
   Comparator compare;
 
 public:
-  constexpr BlobComparator(size_t element_size, Comparator compare)
-      : element_size(element_size), compare(compare) {}
+  constexpr BlobComparator(size_t element_size, size_t alignment,
+                           Comparator compare)
+      : element_size(element_size), alignment(alignment), compare(compare) {}
   constexpr BlobPtr lift(void *data) const {
     return {element_size, static_cast<std::byte *>(data)};
   }
   bool operator()(const void *a, const void *b) const {
     return compare(a, b) < 0;
+  }
+  size_t size() const { return element_size; }
+  size_t align() const { return alignment; }
+  size_t alloca_padding() const {
+    return saturating_sub(alignment, alignof(std::max_align_t));
+  }
+  constexpr BlobPtr lift_alloca(std::byte *data) const {
+    uintptr_t addr = reinterpret_cast<uintptr_t>(data);
+    addr += (-addr) & (alignment - 1);
+    return {element_size, reinterpret_cast<std::byte *>(addr)};
   }
 };
 

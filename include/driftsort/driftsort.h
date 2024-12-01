@@ -24,7 +24,8 @@ trivial_heap_sort(void *raw_v, size_t length,
   size_t end = length;
   size_t start = end / 2;
   auto left_child = [](size_t i) -> size_t { return 2 * i + 1; };
-  auto tmp = DRIFTSORT_ALLOCA(array.size(), 1);
+  auto alloca_space = DRIFTSORT_ALLOCA(comp, 1);
+  BlobPtr tmp = comp.lift(alloca_space);
   auto swap = [&](BlobPtr a, BlobPtr b) {
     a.copy_nonoverlapping(tmp);
     b.copy_nonoverlapping(a);
@@ -77,14 +78,16 @@ DRIFTSORT_NOINLINE inline void driftsort(void *raw_v, size_t length,
   size_t alloc_length = std::max(length / 2, std::min(length, max_full_alloc));
   alloc_length = std::max(alloc_length, quick::SMALLSORT_THRESHOLD + 16);
   if (alloc_length > HEAP_ALLOC_THRESHOLD) {
-    auto raw_scratch = ::operator new(alloc_length * v.size());
+    auto raw_scratch =
+        ::operator new(alloc_length * v.size(), std::align_val_t{comp.align()});
     if (DRIFTSORT_UNLIKELY(raw_scratch == nullptr))
       return trivial_heap_sort(raw_v, length, comp);
     BlobPtr scratch{v.size(), static_cast<std::byte *>(raw_scratch)};
     drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
-    ::operator delete(raw_scratch);
+    ::operator delete(raw_scratch, std::align_val_t{comp.align()});
   } else {
-    BlobPtr scratch = DRIFTSORT_ALLOCA(v.size(), alloc_length);
+    auto raw_scratch_space = DRIFTSORT_ALLOCA(comp, alloc_length);
+    BlobPtr scratch = comp.lift_alloca(raw_scratch_space);
     drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
   }
 }
@@ -96,19 +99,20 @@ inline void qsort_r(void *data, size_t element_size, size_t length,
   if (DRIFTSORT_LIKELY(length < 2))
     return;
 
-  BlobComparator<Comp> comp{element_size, compare};
+  size_t alignment = guess_alignment(element_size, data);
+  BlobComparator<Comp> comp{element_size, alignment, compare};
 
   // Insertion sort is always fine because we never call comparison on temporary
   // space
   constexpr size_t MAX_LEN_ALWAYS_INSERTION_SORT = 20;
+  constexpr size_t MAX_ALIGNMENT = 1024;
   if (DRIFTSORT_LIKELY(length <= MAX_LEN_ALWAYS_INSERTION_SORT))
     return small::insertion_sort_shift_left(data, length, length, comp);
 
-  size_t alignment = guess_alignment(element_size, data);
   // unfortunately, due to qsort_r's restriction, we cannot really know the
   // alignment of over-aligned types, so we have to fall back to slow path.
   // This is similar to the behavior of glibc's qsort.
-  if (DRIFTSORT_UNLIKELY(alignment > alignof(std::max_align_t)))
+  if (DRIFTSORT_UNLIKELY(alignment > MAX_ALIGNMENT))
     return trivial_heap_sort(data, length, comp);
 
   driftsort(data, length, comp);

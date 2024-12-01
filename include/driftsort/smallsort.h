@@ -150,7 +150,8 @@ inline void insert_tail(void *raw_begin, void *raw_tail,
   if (!comp(tail, cursor))
     return;
 
-  BlobPtr tmp = DRIFTSORT_ALLOCA(tail.size(), 1);
+  auto tmp_space = DRIFTSORT_ALLOCA(comp, 1);
+  BlobPtr tmp = comp.lift_alloca(tmp_space);
   tail.copy_nonoverlapping(tmp);
   CopyOnDrop gap_guard(tmp, tail, 1);
 

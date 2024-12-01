@@ -38,12 +38,13 @@
 #define DRIFTSORT_CONST
 #endif
 
-#ifdef __GNUC__
-#define DRIFTSORT_ALLOCA(elm_size, n)                                          \
-  (BlobPtr{elm_size, static_cast<std::byte *>(__builtin_alloca(elm_size * n))})
-#else
-#define DRIFTSORT_ALLOCA(elm_size, n)                                          \
-  (BlobPtr{elm_size, static_cast<std::byte *>(_malloca(elm_size * n))})
+#if __has_builtin(__builtin_alloca)
+#define DRIFTSORT_ALLOCA(comp, n)                                              \
+  static_cast<std::byte *>(                                                    \
+      __builtin_alloca(comp.size() * n + comp.alloca_padding()))
+#elif defined(_MSC_VER)
+#define DRIFTSORT_ALLOCA(comp, n)                                              \
+  static_cast<std::byte *>(_malloca(comp.size() * n + comp.alloca_padding()))
 #endif
 
 #if __has_attribute(visibility)
