@@ -81,17 +81,17 @@ template <typename Comp>
 inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
                            size_t scratch_length, size_t min_good_run_length,
                            bool eager_sort, const BlobComparator<Comp> &comp) {
-  auto reverse = [](BlobPtr array, size_t length) {
+  auto v = comp.lift(raw_v);
+  auto tmp = DRIFTSORT_ALLOCA(v.size(), 1);
+  auto reverse = [&](BlobPtr array, size_t length) {
     for (size_t i = 0; i < length / 2; i++) {
       auto a = array.offset(i);
       auto b = array.offset(length - 1 - i);
-      auto tmp = DRIFTSORT_ALLOCA(a.size(), 1);
       a.copy_nonoverlapping(tmp);
       b.copy_nonoverlapping(a);
       tmp.copy_nonoverlapping(b);
     }
   };
-  auto v = comp.lift(raw_v);
   if (length >= min_good_run_length) {
     size_t run_length;
     bool descending = find_existing_run(raw_v, length, comp, run_length);
