@@ -30,6 +30,7 @@ void qsort_greater(std::vector<int> a) { qsort<std::greater<int>>(a); }
 template <size_t Factor>
 struct alignas(alignof(long) * Factor) OverAlignedLong {
   std::array<long, Factor> data;
+  constexpr OverAlignedLong(std::array<long, Factor> data) : data(data) {}
   bool operator<(const OverAlignedLong &other) const {
     return data < other.data;
   }
@@ -42,7 +43,7 @@ template <size_t Factor>
 void qsort_over_aligned(std::vector<std::array<long, Factor>> a) {
   std::vector<OverAlignedLong<Factor>> b;
   for (auto &e : a)
-    b.emplace_back(e);
+    b.push_back(OverAlignedLong<Factor>{e});
   std::vector<OverAlignedLong<Factor>> c = b;
   std::sort(b.begin(), b.end());
   driftsort::qsort_r(c.data(), sizeof(OverAlignedLong<Factor>), c.size(),
