@@ -1,7 +1,5 @@
 
 #include "driftsort/driftsort.h"
-#include <cstdlib>
-
 typedef int (*compar_d_fn_t)(const void *, const void *, void *);
 typedef int (*compar_fn_t)(const void *, const void *);
 
