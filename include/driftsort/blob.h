@@ -28,14 +28,30 @@ public:
   constexpr BlobPtr() : element_size(0), data(nullptr) {}
   constexpr BlobPtr(size_t element_size, std::byte *data)
       : element_size(element_size), data(data) {}
-  void copy_nonoverlapping(BlobPtr dest, size_t n = 1) const {
-    if (DRIFTSORT_LIKELY(element_size <= 16 && n == 1)) {
-      for (size_t i = 0; i < element_size; i++) {
-        dest.data[i] = data[i];
+  void copy_nonoverlapping(BlobPtr dst, size_t n = 1) const {
+#if __has_builtin(__builtin_memcpy_inline)
+    if (element_size <= 16 && n == 1) {
+      std::byte *src = data;
+      std::byte *dest = dst.data;
+      if (element_size >= 8) {
+        __builtin_memcpy_inline(dest, src, 8);
+        __builtin_memcpy_inline(&dest[element_size - 8], &src[element_size - 8],
+                                8);
+      } else if (element_size >= 4) {
+        __builtin_memcpy_inline(dest, src, 4);
+        __builtin_memcpy_inline(&dest[element_size - 4], &src[element_size - 4],
+                                4);
+      } else if (element_size >= 2) {
+        __builtin_memcpy_inline(dest, src, 2);
+        __builtin_memcpy_inline(&dest[element_size - 2], &src[element_size - 2],
+                                2);
+      } else {
+        __builtin_memcpy_inline(dest, src, 1);
       }
       return;
     }
-    std::memcpy(dest, data, element_size * n);
+#endif
+    std::memcpy(dst, data, element_size * n);
   }
   void *get() const { return data; }
   size_t size() const { return element_size; }
