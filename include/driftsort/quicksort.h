@@ -32,7 +32,7 @@ template <bool InvertComparison, typename Comp>
 inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
                                size_t pivot_pos,
                                const BlobComparator<Comp> &comp) {
-  bool pivot_goes_left = !InvertComparison;
+  bool pivot_goes_left = InvertComparison;
   auto compare = [&comp](const void *a, const void *b) {
     if constexpr (InvertComparison)
       return !comp(b, a);
