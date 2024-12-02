@@ -30,8 +30,9 @@ namespace quick {
 
 template <bool InvertComparison, typename Comp>
 inline size_t stable_partition(void *raw_v, size_t length, void *raw_scratch,
-                               size_t pivot_pos, bool pivot_goes_left,
+                               size_t pivot_pos,
                                const BlobComparator<Comp> &comp) {
+  bool pivot_goes_left = !InvertComparison;
   auto compare = [&comp](const void *a, const void *b) {
     if constexpr (InvertComparison)
       return !comp(b, a);
@@ -156,13 +157,13 @@ inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
 
     if (!perform_equal_partition) {
       left_partition_len =
-          stable_partition<false>(v, length, scratch, pivot_pos, false, comp);
+          stable_partition<false>(v, length, scratch, pivot_pos, comp);
       perform_equal_partition = left_partition_len == 0;
     }
 
     if (perform_equal_partition) {
       size_t mid_eq =
-          stable_partition<true>(v, length, scratch, pivot_pos, true, comp);
+          stable_partition<true>(v, length, scratch, pivot_pos, comp);
       v = v.offset(mid_eq);
       length -= mid_eq;
       left_ancestor_pivot = nullptr;
