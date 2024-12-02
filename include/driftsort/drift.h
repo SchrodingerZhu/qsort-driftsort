@@ -77,10 +77,10 @@ inline bool find_existing_run(void *raw_v, size_t length,
 /// run. If not, the result depends on the value of `eager_sort`. If it is true,
 /// then a sorted run of length `SMALL_SORT_THRESHOLD` is returned, and if it
 /// is false an unsorted run of length `min_good_run_len` is returned.
-template <typename Comp>
+template <bool eager_sort, typename Comp>
 inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
                            size_t scratch_length, size_t min_good_run_length,
-                           bool eager_sort, const BlobComparator<Comp> &comp) {
+                           const BlobComparator<Comp> &comp) {
   auto v = comp.lift(raw_v);
   auto alloca_space = DRIFTSORT_ALLOCA(comp, 1);
   BlobPtr tmp = comp.lift_alloca(alloca_space);
@@ -104,14 +104,9 @@ inline RunState create_run(void *raw_v, size_t length, void *raw_scratch,
     }
   }
 
-  if (eager_sort) {
-    // We call stable_quicksort with a len that will immediately call
-    // small-sort. By not calling the small-sort directly here it can always be
-    // inlined into the quicksort itself, making the recursive base case faster
-    // and is generally more binary-size efficient.
+  if constexpr (eager_sort) {
     size_t eager_sort_len = std::min(length, quick::SMALLSORT_THRESHOLD);
-    quick::stable_quicksort(raw_v, eager_sort_len, raw_scratch, scratch_length,
-                            0, nullptr, comp);
+    small::small_sort_general(v, eager_sort_len, raw_scratch, comp);
     return RunState::sorted(eager_sort_len);
   }
 
@@ -192,10 +187,9 @@ inline uint64_t merge_tree_scale_factor(size_t n) {
   uint64_t n64 = static_cast<uint64_t>(n);
   return ((uint64_t{1} << uint64_t{62}) + n64 - uint64_t{1}) / n64;
 }
-template <typename Comp>
+template <bool eager_sort, typename Comp>
 inline void sort(void *raw_v, size_t length, void *raw_scratch,
-                 size_t scratch_length, bool eager_sort,
-                 const BlobComparator<Comp> &comp) {
+                 size_t scratch_length, const BlobComparator<Comp> &comp) {
   if (length < 2)
     return;
   size_t scale_factor = merge_tree_scale_factor(length);
@@ -224,8 +218,9 @@ inline void sort(void *raw_v, size_t length, void *raw_scratch,
     RunState next_run;
     uint8_t desired_depth;
     if (scan_idx < length) {
-      next_run = create_run(v.offset(scan_idx), length - scan_idx, scratch,
-                            scratch_length, min_good_run_len, eager_sort, comp);
+      next_run =
+          create_run<eager_sort>(v.offset(scan_idx), length - scan_idx, scratch,
+                                 scratch_length, min_good_run_len, comp);
       desired_depth =
           merge_tree_depth(scan_idx - prev_run.length(), scan_idx,
                            scan_idx + next_run.length(), scale_factor);

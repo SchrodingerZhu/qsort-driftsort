@@ -29,6 +29,12 @@ public:
   constexpr BlobPtr(size_t element_size, std::byte *data)
       : element_size(element_size), data(data) {}
   void copy_nonoverlapping(BlobPtr dest, size_t n = 1) const {
+    if (DRIFTSORT_LIKELY(element_size <= 16 && n == 1)) {
+      for (size_t i = 0; i < element_size; i++) {
+        dest.data[i] = data[i];
+      }
+      return;
+    }
     std::memcpy(dest, data, element_size * n);
   }
   void *get() const { return data; }

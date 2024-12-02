@@ -83,12 +83,18 @@ DRIFTSORT_NOINLINE inline void driftsort(void *raw_v, size_t length,
     if (DRIFTSORT_UNLIKELY(raw_scratch == nullptr))
       return trivial_heap_sort(raw_v, length, comp);
     BlobPtr scratch{v.size(), static_cast<std::byte *>(raw_scratch)};
-    drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
+    if (eager_sort)
+      drift::sort<true>(v, length, scratch, alloc_length, comp);
+    else
+      drift::sort<false>(v, length, scratch, alloc_length, comp);
     ::operator delete(raw_scratch, std::align_val_t{comp.align()});
   } else {
     auto raw_scratch_space = DRIFTSORT_ALLOCA(comp, alloc_length);
     BlobPtr scratch = comp.lift_alloca(raw_scratch_space);
-    drift::sort(v, length, scratch, alloc_length, eager_sort, comp);
+    if (eager_sort)
+      drift::sort<true>(v, length, scratch, alloc_length, comp);
+    else
+      drift::sort<false>(v, length, scratch, alloc_length, comp);
   }
 }
 template <typename Comp>

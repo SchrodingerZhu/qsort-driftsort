@@ -14,9 +14,9 @@
 namespace DRIFTSORT_HIDDEN driftsort {
 
 namespace drift {
-template <typename Comp>
+template <bool eager_sort, typename Comp>
 void sort(void *raw_v, size_t length, void *raw_scratch, size_t scratch_length,
-          bool eager_sort, const BlobComparator<Comp> &comp);
+          const BlobComparator<Comp> &comp);
 }
 
 namespace quick {
@@ -131,7 +131,7 @@ inline void stable_quicksort(void *raw_v, size_t length, void *raw_scratch,
     }
 
     if (limit == 0) {
-      drift::sort(v, length, scratch, scratch_length, true, comp);
+      drift::sort<true>(v, length, scratch, scratch_length, comp);
       return;
     }
 
