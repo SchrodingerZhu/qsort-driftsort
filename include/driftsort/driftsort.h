@@ -108,7 +108,7 @@ inline void qsort_r(void *data, size_t element_size, size_t length,
   constexpr size_t MAX_ALIGNMENT = 32;
   if (DRIFTSORT_LIKELY(length <= MAX_LEN_ALWAYS_INSERTION_SORT)) {
     BlobPtr v = comp.lift(data);
-    return small::insertion_sort_shift_left(v.offset(1), length, 1, comp);
+    return small::insertion_sort_shift_left(v, length, 1, comp);
   }
 
   // unfortunately, due to qsort_r's restriction, we cannot really know the
