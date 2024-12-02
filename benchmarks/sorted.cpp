@@ -17,7 +17,7 @@ static void benchmark_qsort_on_sorted_sequence(benchmark::State &state) {
   std::iota(data.begin(), data.end(), 0);
   for (auto _ : state) {
     QSortImpl::qsort(
-        data.data(), sizeof(int), n, [](const void *a, const void *b) {
+        data.data(), n, sizeof(int), [](const void *a, const void *b) {
           return *static_cast<const int *>(a) - *static_cast<const int *>(b);
         });
     benchmark::DoNotOptimize(data);

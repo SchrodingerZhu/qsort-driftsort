@@ -24,7 +24,7 @@ static void benchmark_qsort_on_huge_data(benchmark::State &state) {
     std::vector data_copy = data;
     state.ResumeTiming();
     QSortImpl::qsort(
-        data_copy.data(), sizeof(int), n, [](const void *a, const void *b) {
+        data_copy.data(), n, sizeof(int), [](const void *a, const void *b) {
           return *static_cast<const int *>(a) - *static_cast<const int *>(b);
         });
     benchmark::DoNotOptimize(data_copy);
@@ -34,8 +34,8 @@ static void benchmark_qsort_on_huge_data(benchmark::State &state) {
 
 BENCHMARK_TEMPLATE(benchmark_qsort_on_huge_data, driftsort::DriftSort)
     ->RangeMultiplier(2)
-    ->Range(16384, 536870912);
+    ->Range(16384, 67108864);
 
 BENCHMARK_TEMPLATE(benchmark_qsort_on_huge_data, driftsort::LibcSort)
     ->RangeMultiplier(2)
-    ->Range(16384, 536870912);
+    ->Range(16384, 67108864);

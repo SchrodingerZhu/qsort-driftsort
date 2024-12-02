@@ -23,7 +23,7 @@ static void benchmark_qsort_on_randomized_sequence(benchmark::State &state) {
     std::shuffle(data.begin(), data.end(), g);
     state.ResumeTiming();
     QSortImpl::qsort(
-        data.data(), sizeof(int), n, [](const void *a, const void *b) {
+        data.data(), n, sizeof(int), [](const void *a, const void *b) {
           return *static_cast<const int *>(a) - *static_cast<const int *>(b);
         });
     benchmark::DoNotOptimize(data);

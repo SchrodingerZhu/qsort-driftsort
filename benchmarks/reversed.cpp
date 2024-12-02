@@ -19,7 +19,7 @@ static void benchmark_qsort_on_reversed_sequence(benchmark::State &state) {
     std::iota(data.rbegin(), data.rend(), 0);
     state.ResumeTiming();
     QSortImpl::qsort(
-        data.data(), sizeof(int), n, [](const void *a, const void *b) {
+        data.data(), n, sizeof(int), [](const void *a, const void *b) {
           return *static_cast<const int *>(a) - *static_cast<const int *>(b);
         });
     benchmark::DoNotOptimize(data);

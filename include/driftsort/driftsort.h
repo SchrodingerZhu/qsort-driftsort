@@ -92,7 +92,7 @@ DRIFTSORT_NOINLINE inline void driftsort(void *raw_v, size_t length,
   }
 }
 template <typename Comp>
-inline void qsort_r(void *data, size_t element_size, size_t length,
+inline void qsort_r(void *data, size_t length, size_t element_size,
                     Comp compare) {
   if (element_size == 0)
     return;

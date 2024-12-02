@@ -17,7 +17,7 @@ template <class F> void qsort(std::vector<int> a) {
   std::vector<int> b = a;
   std::sort(a.begin(), a.end(), F{});
   driftsort::qsort_r(
-      b.data(), sizeof(int), b.size(), [](const void *a, const void *b) {
+      b.data(), b.size(), sizeof(int), [](const void *a, const void *b) {
         return -F{}(*static_cast<const int *>(a), *static_cast<const int *>(b));
       });
   ASSERT_EQ(a, b);
@@ -46,7 +46,7 @@ void qsort_over_aligned(std::vector<std::array<long, Factor>> a) {
     b.push_back(OverAlignedLong<Factor>{e});
   std::vector<OverAlignedLong<Factor>> c = b;
   std::sort(b.begin(), b.end());
-  driftsort::qsort_r(c.data(), sizeof(OverAlignedLong<Factor>), c.size(),
+  driftsort::qsort_r(c.data(), c.size(), sizeof(OverAlignedLong<Factor>),
                      [](const void *a, const void *b) {
                        return -(
                            *static_cast<const OverAlignedLong<Factor> *>(a) <
